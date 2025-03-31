@@ -4,7 +4,7 @@ import pydantic
 import pytest
 from pydantic import create_model
 
-import dspy
+import aletheia
 
 
 def test_json_adapter_passes_structured_output_when_supported_by_model():
@@ -12,17 +12,17 @@ def test_json_adapter_passes_structured_output_when_supported_by_model():
         subfield1: int = pydantic.Field(description="Int subfield 1", ge=0, le=10)
         subfield2: float = pydantic.Field(description="Float subfield 2")
 
-    class TestSignature(dspy.Signature):
-        input1: str = dspy.InputField()
-        output1: str = dspy.OutputField()  # Description intentionally left blank
-        output2: bool = dspy.OutputField(desc="Boolean output field")
-        output3: OutputField3 = dspy.OutputField(desc="Nested output field")
-        output4_unannotated = dspy.OutputField(desc="Unannotated output field")
+    class TestSignature(aletheia.Signature):
+        input1: str = aletheia.InputField()
+        output1: str = aletheia.OutputField()  # Description intentionally left blank
+        output2: bool = aletheia.OutputField(desc="Boolean output field")
+        output3: OutputField3 = aletheia.OutputField(desc="Nested output field")
+        output4_unannotated = aletheia.OutputField(desc="Unannotated output field")
 
-    program = dspy.Predict(TestSignature)
+    program = aletheia.Predict(TestSignature)
 
-    # Configure DSPy to use an OpenAI LM that supports structured outputs
-    dspy.configure(lm=dspy.LM(model="openai/gpt4o"), adapter=dspy.JSONAdapter())
+    # Configure aletheia to use an OpenAI LM that supports structured outputs
+    aletheia.configure(lm=aletheia.LM(model="openai/gpt4o"), adapter=aletheia.JSONAdapter())
     with mock.patch("litellm.completion") as mock_completion:
         program(input1="Test input")
 
@@ -32,7 +32,7 @@ def test_json_adapter_passes_structured_output_when_supported_by_model():
             attrs["json_schema_extra"] = {
                 k: v
                 for k, v in attrs["json_schema_extra"].items()
-                if k != "__dspy_field_type" and not (k == "desc" and v == f"${{{field_name}}}")
+                if k != "__aletheia_field_type" and not (k == "desc" and v == f"${{{field_name}}}")
             }
         return attrs
 
@@ -48,8 +48,8 @@ def test_json_adapter_passes_structured_output_when_supported_by_model():
             field_info=TestSignature.output_fields[field_name],
         )
 
-    # Configure DSPy to use a model from a fake provider that doesn't support structured outputs
-    dspy.configure(lm=dspy.LM(model="fakeprovider/fakemodel"), adapter=dspy.JSONAdapter())
+    # Configure aletheia to use a model from a fake provider that doesn't support structured outputs
+    aletheia.configure(lm=aletheia.LM(model="fakeprovider/fakemodel"), adapter=aletheia.JSONAdapter())
     with mock.patch("litellm.completion") as mock_completion:
         program(input1="Test input")
 
@@ -59,12 +59,12 @@ def test_json_adapter_passes_structured_output_when_supported_by_model():
 
 
 def test_json_adapter_falls_back_when_structured_outputs_fails():
-    class TestSignature(dspy.Signature):
-        input1: str = dspy.InputField()
-        output1: str = dspy.OutputField(desc="String output field")
+    class TestSignature(aletheia.Signature):
+        input1: str = aletheia.InputField()
+        output1: str = aletheia.OutputField(desc="String output field")
 
-    dspy.configure(lm=dspy.LM(model="openai/gpt4o"), adapter=dspy.JSONAdapter())
-    program = dspy.Predict(TestSignature)
+    aletheia.configure(lm=aletheia.LM(model="openai/gpt4o"), adapter=aletheia.JSONAdapter())
+    program = aletheia.Predict(TestSignature)
     with mock.patch("litellm.completion") as mock_completion:
         mock_completion.side_effect = [Exception("Bad structured outputs!"), mock_completion.return_value]
         program(input1="Test input")
@@ -80,15 +80,15 @@ def test_json_adapter_with_structured_outputs_does_not_mutate_original_signature
         subfield1: int = pydantic.Field(description="Int subfield 1")
         subfield2: float = pydantic.Field(description="Float subfield 2")
 
-    class TestSignature(dspy.Signature):
-        input1: str = dspy.InputField()
-        output1: str = dspy.OutputField()  # Description intentionally left blank
-        output2: bool = dspy.OutputField(desc="Boolean output field")
-        output3: OutputField3 = dspy.OutputField(desc="Nested output field")
-        output4_unannotated = dspy.OutputField(desc="Unannotated output field")
+    class TestSignature(aletheia.Signature):
+        input1: str = aletheia.InputField()
+        output1: str = aletheia.OutputField()  # Description intentionally left blank
+        output2: bool = aletheia.OutputField(desc="Boolean output field")
+        output3: OutputField3 = aletheia.OutputField(desc="Nested output field")
+        output4_unannotated = aletheia.OutputField(desc="Unannotated output field")
 
-    dspy.configure(lm=dspy.LM(model="openai/gpt4o"), adapter=dspy.JSONAdapter())
-    program = dspy.Predict(TestSignature)
+    aletheia.configure(lm=aletheia.LM(model="openai/gpt4o"), adapter=aletheia.JSONAdapter())
+    program = aletheia.Predict(TestSignature)
     with mock.patch("litellm.completion"):
         program(input1="Test input")
 

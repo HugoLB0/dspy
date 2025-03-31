@@ -4,7 +4,7 @@
 # """
 
 # import dsp
-# import dspy
+# import aletheia
 
 
 # def get_lm(lm_provider: str, model_path: str, **kwargs) -> dsp.modules.lm.LM:
@@ -15,23 +15,23 @@
 #     model_name = model_path.split("/")[1]
 
 #     if lm_provider == "Bedrock":
-#         bedrock = dspy.Bedrock(region_name="us-west-2")
+#         bedrock = aletheia.Bedrock(region_name="us-west-2")
 #         if model_vendor == "mistral":
-#             return dspy.AWSMistral(bedrock, model_name, **kwargs)
+#             return aletheia.AWSMistral(bedrock, model_name, **kwargs)
 #         elif model_vendor == "anthropic":
-#             return dspy.AWSAnthropic(bedrock, model_name, **kwargs)
+#             return aletheia.AWSAnthropic(bedrock, model_name, **kwargs)
 #         elif model_vendor == "meta":
-#             return dspy.AWSMeta(bedrock, model_name, **kwargs)
+#             return aletheia.AWSMeta(bedrock, model_name, **kwargs)
 #         else:
 #             raise ValueError(
 #                 "Model vendor missing or unsupported: Model path format is <MODEL_VENDOR>/<MODEL_NAME_OR_ENDPOINT>"
 #             )
 #     elif lm_provider == "Sagemaker":
-#         sagemaker = dspy.Sagemaker(region_name="us-west-2")
+#         sagemaker = aletheia.Sagemaker(region_name="us-west-2")
 #         if model_vendor == "mistral":
-#             return dspy.AWSMistral(sagemaker, model_name, **kwargs)
+#             return aletheia.AWSMistral(sagemaker, model_name, **kwargs)
 #         elif model_vendor == "meta":
-#             return dspy.AWSMeta(sagemaker, model_name, **kwargs)
+#             return aletheia.AWSMeta(sagemaker, model_name, **kwargs)
 #         else:
 #             raise ValueError(
 #                 "Model vendor missing or unsupported: Model path format is <MODEL_VENDOR>/<MODEL_NAME_OR_ENDPOINT>"
@@ -53,11 +53,11 @@
 #         # ('Sagemaker', 'mistral/<YOUR_ENDPOINT_NAME>'),  # REPLACE YOUR_ENDPOINT_NAME with your sagemaker endpoint
 #     ]
 
-#     predict_func = dspy.Predict("question -> answer")
+#     predict_func = aletheia.Predict("question -> answer")
 #     for provider, model_path in provider_model_tuples:
 #         print(f"Provider: {provider}, Model: {model_path}")
 #         lm = get_lm(provider, model_path)
-#         with dspy.context(lm=lm):
+#         with aletheia.context(lm=lm):
 #             question = "What is the capital of France?"
 #             answer = predict_func(question=question).answer
 #             print(f"Question: {question}\nAnswer: {answer}")

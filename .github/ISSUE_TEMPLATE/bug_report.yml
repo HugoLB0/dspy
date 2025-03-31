@@ -31,8 +31,8 @@ body:
   - type: input
     id: environment
     attributes:
-      label: "DSPy version"
-      description: "Tell us your DSPy version."
+      label: "aletheia version"
+      description: "Tell us your aletheia version."
     validations:
       required: true
 

@@ -5,17 +5,17 @@ import pandas as pd
 
 import pytest
 
-import dspy
-from dspy.evaluate.evaluate import Evaluate
-from dspy.evaluate.metrics import answer_exact_match
-from dspy.predict import Predict
-from dspy.utils.callback import BaseCallback
-from dspy.utils.dummies import DummyLM
+import aletheia
+from aletheia.evaluate.evaluate import Evaluate
+from aletheia.evaluate.metrics import answer_exact_match
+from aletheia.predict import Predict
+from aletheia.utils.callback import BaseCallback
+from aletheia.utils.dummies import DummyLM
 
 
 def new_example(question, answer):
     """Helper function to create a new example."""
-    return dspy.Example(
+    return aletheia.Example(
         question=question,
         answer=answer,
     ).with_inputs("question")
@@ -35,7 +35,7 @@ def test_evaluate_initialization():
 
 
 def test_evaluate_call():
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM(
             {
                 "What is 1+1?": {"answer": "2"},
@@ -80,7 +80,7 @@ def test_construct_result_df():
 
 
 def test_multithread_evaluate_call():
-    dspy.settings.configure(lm=DummyLM({"What is 1+1?": {"answer": "2"}, "What is 2+2?": {"answer": "4"}}))
+    aletheia.settings.configure(lm=DummyLM({"What is 1+1?": {"answer": "2"}, "What is 2+2?": {"answer": "4"}}))
     devset = [new_example("What is 1+1?", "2"), new_example("What is 2+2?", "4")]
     program = Predict("question -> answer")
     assert program(question="What is 1+1?").answer == "2"
@@ -103,7 +103,7 @@ def test_multi_thread_evaluate_call_cancelled(monkeypatch):
             time.sleep(1)
             return super().__call__(*args, **kwargs)
 
-    dspy.settings.configure(lm=SlowLM({"What is 1+1?": {"answer": "2"}, "What is 2+2?": {"answer": "4"}}))
+    aletheia.settings.configure(lm=SlowLM({"What is 1+1?": {"answer": "2"}, "What is 2+2?": {"answer": "4"}}))
 
     devset = [new_example("What is 1+1?", "2"), new_example("What is 2+2?", "4")]
     program = Predict("question -> answer")
@@ -133,7 +133,7 @@ def test_multi_thread_evaluate_call_cancelled(monkeypatch):
 
 
 def test_evaluate_call_bad():
-    dspy.settings.configure(lm=DummyLM({"What is 1+1?": {"answer": "0"}, "What is 2+2?": {"answer": "0"}}))
+    aletheia.settings.configure(lm=DummyLM({"What is 1+1?": {"answer": "0"}, "What is 2+2?": {"answer": "0"}}))
     devset = [new_example("What is 1+1?", "2"), new_example("What is 2+2?", "4")]
     program = Predict("question -> answer")
     ev = Evaluate(
@@ -153,17 +153,17 @@ def test_evaluate_call_bad():
         # has failed for such cases in the past
         (
             lambda text: Predict("text: str -> entities: List[str]")(text=text).entities,
-            dspy.Example(text="United States", entities=["United States"]).with_inputs("text"),
+            aletheia.Example(text="United States", entities=["United States"]).with_inputs("text"),
         ),
         (
             lambda text: Predict("text: str -> entities: List[Dict[str, str]]")(text=text).entities,
-            dspy.Example(text="United States", entities=[{"name": "United States", "type": "location"}]).with_inputs(
+            aletheia.Example(text="United States", entities=[{"name": "United States", "type": "location"}]).with_inputs(
                 "text"
             ),
         ),
         (
             lambda text: Predict("text: str -> first_word: Tuple[str, int]")(text=text).words,
-            dspy.Example(text="United States", first_word=("United", 6)).with_inputs("text"),
+            aletheia.Example(text="United States", first_word=("United", 6)).with_inputs("text"),
         ),
     ],
 )
@@ -174,7 +174,7 @@ def test_evaluate_display_table(program_with_example, display_table, is_in_ipyth
     example_input = next(iter(example.inputs().values()))
     example_output = {key: value for key, value in example.toDict().items() if key not in example.inputs()}
 
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM(
             {
                 example_input: example_output,
@@ -190,7 +190,7 @@ def test_evaluate_display_table(program_with_example, display_table, is_in_ipyth
     assert ev.display_table == display_table
 
     with patch(
-        "dspy.evaluate.evaluate.is_in_ipython_notebook_environment", return_value=is_in_ipython_notebook_environment
+        "aletheia.evaluate.evaluate.is_in_ipython_notebook_environment", return_value=is_in_ipython_notebook_environment
     ):
         ev(program)
         out, _ = capfd.readouterr()
@@ -227,7 +227,7 @@ def test_evaluate_callback():
             self.end_call_count += 1
 
     callback = TestCallback()
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM(
             {
                 "What is 1+1?": {"answer": "2"},

@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pydantic
 import pytest
 
-import dspy
-from dspy import InputField, OutputField, Signature, infer_prefix
-from dspy.utils.dummies import DummyLM
+import aletheia
+from aletheia import InputField, OutputField, Signature, infer_prefix
+from aletheia.utils.dummies import DummyLM
 
 
 def test_field_types_and_custom_attributes():
@@ -152,10 +152,10 @@ def test_insert_field_at_various_positions():
 
 
 def test_order_preserved_with_mixed_annotations():
-    class ExampleSignature(dspy.Signature):
-        text: str = dspy.InputField()
-        output = dspy.OutputField()
-        pass_evaluation: bool = dspy.OutputField()
+    class ExampleSignature(aletheia.Signature):
+        text: str = aletheia.InputField()
+        output = aletheia.OutputField()
+        pass_evaluation: bool = aletheia.OutputField()
 
     expected_order = ["text", "output", "pass_evaluation"]
     actual_order = list(ExampleSignature.fields.keys())
@@ -194,7 +194,7 @@ def test_insantiating2():
 
 def test_multiline_instructions():
     lm = DummyLM([{"output": "short answer"}])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     class MySignature(Signature):
         """First line
@@ -203,16 +203,16 @@ def test_multiline_instructions():
 
         output = OutputField()
 
-    predictor = dspy.Predict(MySignature)
+    predictor = aletheia.Predict(MySignature)
     assert predictor().output == "short answer"
 
 
 def test_dump_and_load_state():
-    class CustomSignature(dspy.Signature):
+    class CustomSignature(aletheia.Signature):
         """I am just an instruction."""
 
-        sentence = dspy.InputField(desc="I am an innocent input!")
-        sentiment = dspy.OutputField()
+        sentence = aletheia.InputField(desc="I am an innocent input!")
+        sentiment = aletheia.OutputField()
 
     state = CustomSignature.dump_state()
     expected = {
@@ -230,11 +230,11 @@ def test_dump_and_load_state():
     }
     assert state == expected
 
-    class CustomSignature2(dspy.Signature):
+    class CustomSignature2(aletheia.Signature):
         """I am a malicious instruction."""
 
-        sentence = dspy.InputField(desc="I am an malicious input!")
-        sentiment = dspy.OutputField()
+        sentence = aletheia.InputField(desc="I am an malicious input!")
+        sentiment = aletheia.OutputField()
 
     assert CustomSignature2.dump_state() != expected
     # Overwrite the state with the state of CustomSignature.

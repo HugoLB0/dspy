@@ -7,7 +7,7 @@ This MR/PR contains the following changes:
 
 - [] Pre-Commit checks are passing (locally and remotely)
 - [] Title of your PR / MR corresponds to the required format
-- [] Commit message follows required format {label}(dspy): {message}
+- [] Commit message follows required format {label}(aletheia): {message}
 
 ## ⚠️ Warnings
 

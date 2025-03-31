@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-import dspy
+import aletheia
 
 
 @pytest.mark.parametrize(
@@ -60,13 +60,13 @@ def test_chat_adapter_quotes_literals_as_expected(
     Literals exactly as we want them to appear (like IPython does).
     """
 
-    class TestSignature(dspy.Signature):
-        input_text: input_literal = dspy.InputField()
-        output_text: output_literal = dspy.OutputField()
+    class TestSignature(aletheia.Signature):
+        input_text: input_literal = aletheia.InputField()
+        output_text: output_literal = aletheia.OutputField()
 
-    program = dspy.Predict(TestSignature)
+    program = aletheia.Predict(TestSignature)
 
-    dspy.configure(lm=dspy.LM(model="openai/gpt4o"), adapter=dspy.ChatAdapter())
+    aletheia.configure(lm=aletheia.LM(model="openai/gpt4o"), adapter=aletheia.ChatAdapter())
 
     with mock.patch("litellm.completion") as mock_completion:
         program(input_text=input_value)

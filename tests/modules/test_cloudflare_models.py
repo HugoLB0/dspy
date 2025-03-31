@@ -2,7 +2,7 @@
 Note: Requires configuration of your Cloudflare account_id and api_key.
 """
 
-import dspy
+import aletheia
 
 models = {
     "@cf/qwen/qwen1.5-0.5b-chat": "https://huggingface.co/qwen/qwen1.5-0.5b-chat",
@@ -36,8 +36,8 @@ models = {
 }
 
 
-def get_lm(name: str): # -> dspy.LM:
-    return dspy.CloudflareAI(model=name)
+def get_lm(name: str): # -> aletheia.LM:
+    return aletheia.CloudflareAI(model=name)
 
 
 def run_tests():
@@ -45,10 +45,10 @@ def run_tests():
     # Configure your AWS credentials with the AWS CLI before running this script
     models
 
-    predict_func = dspy.Predict("question -> answer")
+    predict_func = aletheia.Predict("question -> answer")
     for model_name in models.keys():
         lm = get_lm(model_name)
-        with dspy.context(lm=lm):
+        with aletheia.context(lm=lm):
             question = "What is the capital of France?"
             answer = predict_func(question=question).answer
             print(f"Question: {question}\nAnswer: {answer}")

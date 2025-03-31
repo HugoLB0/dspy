@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-import dspy
-from dspy.predict import KNN
-from dspy.utils import DummyVectorizer
+import aletheia
+from aletheia.predict import KNN
+from aletheia.utils import DummyVectorizer
 
 
-def mock_example(question: str, answer: str) -> dspy.Example:
+def mock_example(question: str, answer: str) -> aletheia.Example:
     """Creates a mock DSP example with specified question and answer."""
-    return dspy.Example(question=question, answer=answer).with_inputs("question")
+    return aletheia.Example(question=question, answer=answer).with_inputs("question")
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def setup_knn() -> KNN:
         mock_example("What is the largest ocean?", "Pacific"),
         mock_example("What is 2+2?", "4"),
     ]
-    return KNN(k=2, trainset=trainset, vectorizer=dspy.Embedder(DummyVectorizer()))
+    return KNN(k=2, trainset=trainset, vectorizer=aletheia.Embedder(DummyVectorizer()))
 
 
 def test_knn_initialization(setup_knn):

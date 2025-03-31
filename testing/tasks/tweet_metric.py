@@ -6,35 +6,35 @@ import openai
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-import dspy
-from dspy import Example
-from dspy.datasets import HotPotQA
+import aletheia
+from aletheia import Example
+from aletheia.datasets import HotPotQA
 
 from .base_task import BaseTask
 
 
-class TweetSignature(dspy.Signature):
+class TweetSignature(aletheia.Signature):
     ("""Given context and a question, answer with a tweet""")
 
-    context = dspy.InputField()
-    question = dspy.InputField()
-    answer = dspy.OutputField(desc="Yes or No")
+    context = aletheia.InputField()
+    question = aletheia.InputField()
+    answer = aletheia.OutputField(desc="Yes or No")
 
 
-class TweetCoT(dspy.Module):
+class TweetCoT(aletheia.Module):
     def __init__(self):
         super().__init__()
-        self.generate_answer = dspy.ChainOfThought(TweetSignature)
+        self.generate_answer = aletheia.ChainOfThought(TweetSignature)
 
     def forward(self, context, question):
         return self.generate_answer(context=context, question=question)
 
 
-class MultiHopTweet(dspy.Module):
+class MultiHopTweet(aletheia.Module):
     def __init__(self, passages_per_hop):
         super().__init__()
-        self.retrieve = dspy.Retrieve(k=passages_per_hop)
-        self.generate_query = dspy.ChainOfThought("context ,question->search_query")
+        self.retrieve = aletheia.Retrieve(k=passages_per_hop)
+        self.generate_query = aletheia.ChainOfThought("context ,question->search_query")
         self.generate_answer = TweetCoT()
 
     def forward(self, question):
@@ -42,20 +42,20 @@ class MultiHopTweet(dspy.Module):
         for hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
-        return dspy.Prediction(
+        return aletheia.Prediction(
             context=context,
             answer=self.generate_answer(context=context, question=question).answer,
         )
 
 
 # Define the signature for automatic assessments.
-class Assess(dspy.Signature):
+class Assess(aletheia.Signature):
     """Assess the quality of a tweet along the specified dimension."""
 
-    context = dspy.InputField(desc="ignore if N/A")
-    assessed_text = dspy.InputField()
-    assessment_question = dspy.InputField()
-    assessment_answer = dspy.OutputField(desc="Yes or No")
+    context = aletheia.InputField(desc="ignore if N/A")
+    assessed_text = aletheia.InputField()
+    assessment_question = aletheia.InputField()
+    assessment_answer = aletheia.OutputField(desc="Yes or No")
 
 
 @lru_cache
@@ -64,9 +64,9 @@ def load_models():
 
     openai.api_key = os.environ.get("OPENAI_API_KEY")
     openai.api_base = os.environ.get("OPENAI_API_BASE")
-    gpt3T = dspy.OpenAI(model="gpt-3.5-turbo-1106", max_tokens=1000, model_type="chat")
-    gpt4T = dspy.OpenAI(model="gpt-4-1106-preview", max_tokens=1000, model_type="chat")
-    retrieve = dspy.Retrieve(k=5)
+    gpt3T = aletheia.OpenAI(model="gpt-3.5-turbo-1106", max_tokens=1000, model_type="chat")
+    gpt4T = aletheia.OpenAI(model="gpt-4-1106-preview", max_tokens=1000, model_type="chat")
+    retrieve = aletheia.Retrieve(k=5)
     return gpt3T, gpt4T, retrieve
 
 
@@ -91,14 +91,14 @@ def metric(gold, pred, trace=None):
     )
     correct = f"{correct} Does the assessed text above contain the gold answer?"
 
-    with dspy.context(lm=gpt3T):  # TODO Update to GPT4
-        faithful = dspy.Predict(Assess)(
+    with aletheia.context(lm=gpt3T):  # TODO Update to GPT4
+        faithful = aletheia.Predict(Assess)(
             context=context, assessed_text=tweet, assessment_question=faithful
         )
-        correct = dspy.Predict(Assess)(
+        correct = aletheia.Predict(Assess)(
             context="N/A", assessed_text=tweet, assessment_question=correct
         )
-        engaging = dspy.Predict(Assess)(
+        engaging = aletheia.Predict(Assess)(
             context="N/A", assessed_text=tweet, assessment_question=engaging
         )
 
@@ -113,12 +113,12 @@ def metric(gold, pred, trace=None):
     )  # We want a score we can maximize, so take the negative L1 norm and add 1
 
 
-class TweetMetric(dspy.Module):
+class TweetMetric(aletheia.Module):
     def __init__(self):
         super().__init__()
-        self.engaging = dspy.Predict(Assess)
-        self.faithful = dspy.Predict(Assess)
-        self.correct = dspy.Predict(Assess)
+        self.engaging = aletheia.Predict(Assess)
+        self.faithful = aletheia.Predict(Assess)
+        self.correct = aletheia.Predict(Assess)
 
     def forward(self, tweet, context, question, answer):
         engaging = "Does the assessed text make for a self-contained, engaging tweet?"
@@ -144,7 +144,7 @@ class TweetMetric(dspy.Module):
             (correct + engaging + faithful) if correct and (len(tweet) <= 280) else 0
         )
 
-        return dspy.Prediction(score=score / 3.0)
+        return aletheia.Prediction(score=score / 3.0)
 
 
 class TweetMetricTask(BaseTask):
@@ -160,7 +160,7 @@ class TweetMetricTask(BaseTask):
             keep_details=True,
         )
 
-        # Tell DSPy that the 'question' field is the input. Any other fields are labels and/or metadata.
+        # Tell aletheia that the 'question' field is the input. Any other fields are labels and/or metadata.
         trainset_temp = [
             x.without("id", "type").with_inputs("question") for x in dataset.train
         ]
@@ -172,7 +172,7 @@ class TweetMetricTask(BaseTask):
 
         gpt3T, gpt4T, retrieve = load_models()
 
-        with dspy.context(lm=gpt3T):
+        with aletheia.context(lm=gpt3T):
             for ex in tqdm(trainset_temp, desc="Preprocessing Trainset"):
                 context = retrieve(ex.question).passages
                 question = ex.question
@@ -187,7 +187,7 @@ class TweetMetricTask(BaseTask):
 
                 self.trainset.append(
                     Example(
-                        **example, dspy_uuid=str(uuid.uuid4()), dspy_split="train"
+                        **example, aletheia_uuid=str(uuid.uuid4()), aletheia_split="train"
                     ).with_inputs("context", "question", "answer", "tweet")
                 )
 
@@ -205,7 +205,7 @@ class TweetMetricTask(BaseTask):
 
                 self.testset.append(
                     Example(
-                        **example, dspy_uuid=str(uuid.uuid4()), dspy_split="dev"
+                        **example, aletheia_uuid=str(uuid.uuid4()), aletheia_split="dev"
                     ).with_inputs("context", "question", "answer", "tweet")
                 )
 

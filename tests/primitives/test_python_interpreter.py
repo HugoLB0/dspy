@@ -4,7 +4,7 @@ import pytest
 import random
 
 
-from dspy.primitives.python_interpreter import InterpreterError, PythonInterpreter
+from aletheia.primitives.python_interpreter import InterpreterError, PythonInterpreter
 
 # This test suite requires deno to be installed. Please install deno following https://docs.deno.com/runtime/getting_started/installation/
 if shutil.which("deno") is None:

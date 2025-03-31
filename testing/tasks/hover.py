@@ -3,9 +3,9 @@ import random
 import tqdm
 from datasets import load_dataset
 import pandas as pd
-import dspy
+import aletheia
 from dsp.utils.utils import deduplicate
-from dspy.evaluate import Evaluate
+from aletheia.evaluate import Evaluate
 
 from .base_task import BaseTask
 
@@ -17,28 +17,28 @@ def count_unique_docs(example):
 def discrete_retrieval_eval(example, pred, trace=None):
     gold_titles = set(
         map(
-            dspy.evaluate.normalize_text,
+            aletheia.evaluate.normalize_text,
             [doc["key"] for doc in example["supporting_facts"]],
         )
     )
     found_titles = set(
         map(
-            dspy.evaluate.normalize_text,
+            aletheia.evaluate.normalize_text,
             [c.split(" | ")[0] for c in pred.retrieved_docs],
         )
     )
     return gold_titles.issubset(found_titles)
 
 
-class RetrieveMultiHop(dspy.Module):
+class RetrieveMultiHop(aletheia.Module):
     def __init__(self):
         super().__init__()
         self.k = 7
-        self.create_query_hop2 = dspy.ChainOfThought("claim,summary_1->query")
-        self.create_query_hop3 = dspy.ChainOfThought("claim,summary_1,summary_2->query")
-        self.retrieve_k = dspy.Retrieve(k=self.k)
-        self.summarize1 = dspy.ChainOfThought("claim,passages->summary")
-        self.summarize2 = dspy.ChainOfThought("claim,context,passages->summary")
+        self.create_query_hop2 = aletheia.ChainOfThought("claim,summary_1->query")
+        self.create_query_hop3 = aletheia.ChainOfThought("claim,summary_1,summary_2->query")
+        self.retrieve_k = aletheia.Retrieve(k=self.k)
+        self.summarize1 = aletheia.ChainOfThought("claim,passages->summary")
+        self.summarize2 = aletheia.ChainOfThought("claim,context,passages->summary")
 
     def forward(self, claim):
         # HOP 1
@@ -60,7 +60,7 @@ class RetrieveMultiHop(dspy.Module):
         ).query
         hop3_docs = self.retrieve_k(hop3_query).passages
 
-        return dspy.Prediction(retrieved_docs=hop1_docs + hop2_docs + hop3_docs)
+        return aletheia.Prediction(retrieved_docs=hop1_docs + hop2_docs + hop3_docs)
 
 
 class HoverRetrieveDiscrete(BaseTask):
@@ -101,8 +101,8 @@ class HoverRetrieveDiscrete(BaseTask):
         trainset = reformatted_hf_trainset
         testset = reformatted_hf_testset
 
-        self.trainset = [dspy.Example(**x).with_inputs("claim") for x in trainset]
-        self.testset = [dspy.Example(**x).with_inputs("claim") for x in testset]
+        self.trainset = [aletheia.Example(**x).with_inputs("claim") for x in trainset]
+        self.testset = [aletheia.Example(**x).with_inputs("claim") for x in testset]
 
         # Set up metrics
         NUM_THREADS = 16

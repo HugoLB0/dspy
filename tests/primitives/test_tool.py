@@ -1,6 +1,6 @@
 import pytest
 from pydantic import BaseModel
-from dspy.primitives.tool import Tool
+from aletheia.primitives.tool import Tool
 from typing import Any, Optional
 
 

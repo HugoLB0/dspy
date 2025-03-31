@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pydantic
 from datamodel_code_generator import InputFileType, generate
 
-import dspy
-from tests.reliability.utils import assert_program_output_correct, judge_dspy_configuration
+import aletheia
+from tests.reliability.utils import assert_program_output_correct, judge_aletheia_configuration
 
 
 def _retry(retries):
@@ -46,15 +46,15 @@ def _retry(retries):
 
 
 @_retry(retries=5)
-def generate_test_program(dst_path: str, additional_instructions: Optional[str] = None) -> dspy.Module:
+def generate_test_program(dst_path: str, additional_instructions: Optional[str] = None) -> aletheia.Module:
     """
-    Generate a DSPy program for a reliability test case and save it to a destination path.
+    Generate a aletheia program for a reliability test case and save it to a destination path.
 
     Args:
         dst_path: The directory path to which to save the generated program.
         additional_instructions: Additional instructions for generating the program signature.
     Return:
-        A dspy.Module object representing the generated program.
+        A aletheia.Module object representing the generated program.
     """
 
     def generate_models(schema: Dict[str, Any], class_name: str) -> str:
@@ -103,7 +103,7 @@ def generate_test_program(dst_path: str, additional_instructions: Optional[str] 
     # Disable caching and use a nonzero temperature to ensure that new programs are generated
     # upon retry if there's an error in the generation process (e.g. the program has an
     # invalid signature)
-    with judge_dspy_configuration(cache=False, temperature=0.5), tempfile.TemporaryDirectory() as tmp_dir:
+    with judge_aletheia_configuration(cache=False, temperature=0.5), tempfile.TemporaryDirectory() as tmp_dir:
         generated_signature = _get_test_program_generation_program()(
             additional_instructions=additional_instructions or ""
         )
@@ -169,8 +169,8 @@ def generate_test_inputs(
     # Disable caching and use a nonzero temperature to ensure that new inputs are generated
     # upon retry if there's an error in the generation process (e.g. the input doesn't match the
     # program signature)
-    with judge_dspy_configuration(cache=False, temperature=0.5), tempfile.TemporaryDirectory() as tmp_dir:
-        program: dspy.Module
+    with judge_aletheia_configuration(cache=False, temperature=0.5), tempfile.TemporaryDirectory() as tmp_dir:
+        program: aletheia.Module
         program_input_schema: pydantic.BaseModel
         program, program_input_schema = load_generated_program(program_path)
         signature_json_schema = _get_json_schema(program.signature)
@@ -226,20 +226,20 @@ def generate_test_inputs(
         shutil.copytree(tmp_dir, dst_path, dirs_exist_ok=True)
 
 
-def load_generated_program(path) -> Tuple[dspy.Module, pydantic.BaseModel]:
+def load_generated_program(path) -> Tuple[aletheia.Module, pydantic.BaseModel]:
     """
     Loads a generated program from the specified file.
 
     Args:
         path: The path to the file containing the generated program.
     Returns:
-        A tuple containing: 1. a dspy.Module object representing the generated program
+        A tuple containing: 1. a aletheia.Module object representing the generated program
         and 2. a pydantic.BaseModel object representing the program's input schema.
     """
     if os.path.isdir(path):
         path = os.path.join(path, "program.py")
     if not os.path.exists(path):
-        raise ValueError(f"DSPy test program file not found: {path}")
+        raise ValueError(f"aletheia test program file not found: {path}")
 
     program_module = _import_program_module_from_path(module_name="program", file_path=path)
     return program_module.program, program_module.ProgramInputs
@@ -248,8 +248,8 @@ def load_generated_program(path) -> Tuple[dspy.Module, pydantic.BaseModel]:
 @dataclass
 class GeneratedTestCase:
     """
-    Represents a DSPy reliability test case that has been generated with the help of a
-    DSPy program generator and program input generator.
+    Represents a aletheia reliability test case that has been generated with the help of a
+    aletheia program generator and program input generator.
     """
 
     # The name of the test case for identification / debugging with pytest
@@ -310,7 +310,7 @@ def load_generated_cases(dir_path) -> List[GeneratedTestCase]:
 def run_generated_case(generated_case: GeneratedTestCase):
     """
     Runs a generated reliability test case by 1. running the test case program on the test case
-    input using the global DSPy configuration and 2. verifying that the output of the program
+    input using the global aletheia configuration and 2. verifying that the output of the program
     satisfies the assertions specified in the test case.
 
     Args:
@@ -332,21 +332,21 @@ def run_generated_case(generated_case: GeneratedTestCase):
 
 def _get_test_program_signature_and_module_definition(program_description: str) -> str:
     """
-    Generate the signature and model definition for a test DSPy program.
+    Generate the signature and model definition for a test aletheia program.
 
     Args:
         program_description: A description of the generated program.
     """
     use_cot = random.choice([True, False])
     if use_cot:
-        program_var_definition = "program = dspy.ChainOfThought(program_signature)"
+        program_var_definition = "program = aletheia.ChainOfThought(program_signature)"
     else:
-        program_var_definition = "program = dspy.Predict(program_signature)"
+        program_var_definition = "program = aletheia.Predict(program_signature)"
 
     return '''
-import dspy
+import aletheia
 
-class BaseSignature(dspy.Signature):
+class BaseSignature(aletheia.Signature):
     """
     {program_description}
     """
@@ -355,13 +355,13 @@ program_signature = BaseSignature
 for input_field_name, input_field in ProgramInputs.model_fields.items():
     program_signature = program_signature.append(
         name=input_field_name,
-        field=dspy.InputField(description=input_field.description),
+        field=aletheia.InputField(description=input_field.description),
         type_=input_field.annotation,
     )
 for output_field_name, output_field in ProgramOutputs.model_fields.items():
     program_signature = program_signature.append(
         name=output_field_name,
-        field=dspy.OutputField(description=input_field.description),
+        field=aletheia.OutputField(description=input_field.description),
         type_=output_field.annotation,
     )
 
@@ -369,15 +369,15 @@ for output_field_name, output_field in ProgramOutputs.model_fields.items():
 '''.format(program_description=program_description, program_var_definition=program_var_definition)
 
 
-def _get_test_program_generation_program() -> dspy.Module:
+def _get_test_program_generation_program() -> aletheia.Module:
     """
-    Create a DSPy program for generating other DSPy test programs.
+    Create a aletheia program for generating other aletheia test programs.
 
     Returns:
-        A dspy.Module object representing the program generation program.
+        A aletheia.Module object representing the program generation program.
     """
 
-    class ProgramGeneration(dspy.Signature):
+    class ProgramGeneration(aletheia.Signature):
         """
         Creates an AI program definition, including the AI program's description, input fields, and output fields.
         The AI program should be designed to solve a real problem for its users and produce correct outputs for a variety of inputs.
@@ -389,31 +389,31 @@ def _get_test_program_generation_program() -> dspy.Module:
         precisely in absolutely all cases.
         """
 
-        additional_instructions: str = dspy.InputField(
+        additional_instructions: str = aletheia.InputField(
             description="Additional instructions for what kind of program to generate and how to generate it"
         )
-        program_description: str = dspy.OutputField(
+        program_description: str = aletheia.OutputField(
             description="A description of the generated AI program, including its purpose and expected behavior"
         )
-        program_input_fields: str = dspy.OutputField(
+        program_input_fields: str = aletheia.OutputField(
             description="The input fields of the generated program in JSON Schema format, including input field names, types, and descriptions."
         )
-        program_output_fields: str = dspy.OutputField(
+        program_output_fields: str = aletheia.OutputField(
             description="The output fields of the generated program in JSON Schema format, including input field names, types, and descriptions."
         )
 
-    return dspy.ChainOfThought(ProgramGeneration)
+    return aletheia.ChainOfThought(ProgramGeneration)
 
 
-def _get_test_inputs_generation_program() -> dspy.Module:
+def _get_test_inputs_generation_program() -> aletheia.Module:
     """
-    Create a DSPy program for generating test inputs for a given DSPy test program.
+    Create a aletheia program for generating test inputs for a given aletheia test program.
 
     Returns:
-        A dspy.Module object representing the test input generation program.
+        A aletheia.Module object representing the test input generation program.
     """
 
-    class _TestInputsGeneration(dspy.Signature):
+    class _TestInputsGeneration(aletheia.Signature):
         """
         Given the description and input / output signature (format) of an AI program that is designed to produce correct outputs for a variety
         of inputs while adhering to the input / output signature, generate test inputs used to verify that the program
@@ -427,26 +427,26 @@ def _get_test_inputs_generation_program() -> dspy.Module:
         precisely in absolutely all cases.
         """
 
-        program_description: str = dspy.InputField(
+        program_description: str = aletheia.InputField(
             description="A description of the AI program being tested, including its purpose and expected behavior"
         )
-        program_input_signature: str = dspy.InputField(
+        program_input_signature: str = aletheia.InputField(
             description="The input signature of the program in JSON Schema format, including input field names, types, and descriptions. The outermost fields in the JSON schema definition represent the top-level input fields of the program."
         )
-        program_output_signature: str = dspy.InputField(
+        program_output_signature: str = aletheia.InputField(
             description="The output signature of the program in JSON Schema format, including output field names, types, and descriptions. The outermost fields in the JSON schema definition represent the top-level output fields of the program."
         )
-        additional_instructions: str = dspy.InputField(description="Additional instructions for generating test inputs")
-        test_inputs: List[_TestInput] = dspy.OutputField(
+        additional_instructions: str = aletheia.InputField(description="Additional instructions for generating test inputs")
+        test_inputs: List[_TestInput] = aletheia.OutputField(
             description="Generated test inputs for the program, used to verify the correctness of the program outputs for a variety of inputs"
         )
 
-    return dspy.ChainOfThought(_TestInputsGeneration)
+    return aletheia.ChainOfThought(_TestInputsGeneration)
 
 
 class _TestInput(pydantic.BaseModel):
     """
-    Represents a generated test input for a DSPy program.
+    Represents a generated test input for a aletheia program.
     """
 
     program_input: str = pydantic.Field(
@@ -457,13 +457,13 @@ class _TestInput(pydantic.BaseModel):
     )
 
 
-def _get_assertions_generation_program() -> dspy.Module:
+def _get_assertions_generation_program() -> aletheia.Module:
     """
-    Create a DSPy program for generating assertions that verify the correctness of outputs
-    from other DSPy programs.
+    Create a aletheia program for generating assertions that verify the correctness of outputs
+    from other aletheia programs.
     """
 
-    class _TestInputsGeneration(dspy.Signature):
+    class _TestInputsGeneration(aletheia.Signature):
         """
         Given 1. the description and input / output signature (format) of an AI program that is designed to produce correct outputs for a variety
         of inputs while adhering to the input / output signature and 2. an example input to the AI program, generate assertions that can be used
@@ -479,20 +479,20 @@ def _get_assertions_generation_program() -> dspy.Module:
         If it's too difficult to generate accurate assertions, leave them blank.
         """
 
-        program_description: str = dspy.InputField(
+        program_description: str = aletheia.InputField(
             description="A description of the AI program being tested, including its purpose and expected behavior"
         )
-        program_input: str = dspy.InputField(
+        program_input: str = aletheia.InputField(
             description="An example input to the AI program, represented as a JSON string"
         )
-        program_output_signature: str = dspy.InputField(
+        program_output_signature: str = aletheia.InputField(
             description="The output signature of the program in JSON Schema format, including output field names, types, and descriptions. The outermost fields in the JSON schema definition represent the top-level output fields of the program."
         )
-        output_assertions: List[str] = dspy.OutputField(
+        output_assertions: List[str] = aletheia.OutputField(
             description="Assertions used to verify the correctness of the program output after running the program on the specified input"
         )
 
-    return dspy.ChainOfThought(_TestInputsGeneration)
+    return aletheia.ChainOfThought(_TestInputsGeneration)
 
 
 def _clean_json_schema_property(prop: Dict[str, Any]) -> Dict[str, Any]:
@@ -506,7 +506,7 @@ def _clean_json_schema_property(prop: Dict[str, Any]) -> Dict[str, Any]:
         The cleaned JSON schema property dictionary.
     """
     cleaned_prop = {
-        k: v for k, v in prop.items() if k not in {"desc", "__dspy_field_type", "title", "prefix", "required"}
+        k: v for k, v in prop.items() if k not in {"desc", "__aletheia_field_type", "title", "prefix", "required"}
     }
 
     # Recursively clean nested properties
@@ -516,12 +516,12 @@ def _clean_json_schema_property(prop: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned_prop
 
 
-def _get_json_schema(signature: dspy.Signature) -> Dict[str, Any]:
+def _get_json_schema(signature: aletheia.Signature) -> Dict[str, Any]:
     """
-    Obtain the JSON schema representation of a DSPy signature.
+    Obtain the JSON schema representation of a aletheia signature.
 
     Args:
-        signature: The DSPy signature for which to generate a JSON schema.
+        signature: The aletheia signature for which to generate a JSON schema.
     Returns:
         A JSON schema representation of the signature.
     """
@@ -535,8 +535,8 @@ def _get_json_schema(signature: dspy.Signature) -> Dict[str, Any]:
             if "$ref" in schema:
                 ref_path = schema["$ref"].replace("#/$defs/", "")
                 ref_schema = definitions.get(ref_path, {})
-                if "__dspy_field_type" in schema:
-                    ref_schema["__dspy_field_type"] = schema["__dspy_field_type"]
+                if "__aletheia_field_type" in schema:
+                    ref_schema["__aletheia_field_type"] = schema["__aletheia_field_type"]
                 # Recursively expand the reference schema as well
                 return expand_refs(ref_schema, definitions)
             else:
@@ -553,7 +553,7 @@ def _get_json_schema(signature: dspy.Signature) -> Dict[str, Any]:
 
 def _split_schema(schema: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
-    Split a JSON schema into input and output components based on DSPy field types.
+    Split a JSON schema into input and output components based on aletheia field types.
 
     Args:
         schema: The JSON schema to split.
@@ -568,8 +568,8 @@ def _split_schema(schema: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any
         # Clean the property
         cleaned_prop = _clean_schema(prop)
 
-        # Determine if the property is input or output based on __dspy_field_type
-        field_type = prop.get("__dspy_field_type")
+        # Determine if the property is input or output based on __aletheia_field_type
+        field_type = prop.get("__aletheia_field_type")
         if field_type == "input":
             inputs[key] = cleaned_prop
         elif field_type == "output" or field_type is None:
@@ -595,7 +595,7 @@ def _clean_schema(prop: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         A cleaned version of the property.
     """
-    keys_to_remove = ["__dspy_field_type", "title"]  # Add any other keys to be removed here
+    keys_to_remove = ["__aletheia_field_type", "title"]  # Add any other keys to be removed here
 
     # Iterate through the dictionary, applying cleaning recursively if value is a nested dict
     cleaned_prop = {
@@ -608,14 +608,14 @@ def _clean_schema(prop: Dict[str, Any]) -> Dict[str, Any]:
 
 def _json_input_to_program_input(input_schema: pydantic.BaseModel, json_input: str) -> Dict[str, Any]:
     """
-    Convert a JSON input string to a DSPy program input dictionary, validating it against the
+    Convert a JSON input string to a aletheia program input dictionary, validating it against the
     provided program signature.
 
     Args:
         input_schema: A pydantic model representing the program input schema.
-        json_input: The JSON input string to convert to a DSPy program input.
+        json_input: The JSON input string to convert to a aletheia program input.
     Returns:
-        The converted DSPy program input dictionary.
+        The converted aletheia program input dictionary.
     """
     json_input = json.loads(json_input)
     program_input: pydantic.BaseModel = input_schema.model_validate(json_input)
@@ -640,10 +640,10 @@ def _temporarily_prepend_to_system_path(path):
 
 def _import_program_module_from_path(module_name: str, file_path: str):
     """
-    Import a Python module containing a DSPy program from a specified file path.
+    Import a Python module containing a aletheia program from a specified file path.
 
     Args:
-        module_name: The name of the module containing the DSPy program to import.
+        module_name: The name of the module containing the aletheia program to import.
         file_path: The path to the file containing the module definition.
     """
     program_dir = os.path.dirname(file_path)

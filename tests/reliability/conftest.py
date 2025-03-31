@@ -2,11 +2,11 @@ import os
 
 import pytest
 
-import dspy
+import aletheia
 from ..conftest import clear_settings
 from ..reliability.utils import get_adapter, parse_reliability_conf_yaml
 
-# Standard list of models that should be used for periodic DSPy reliability testing
+# Standard list of models that should be used for periodic aletheia reliability testing
 MODEL_LIST = [
     "gpt-4o",
     "gpt-4o-mini",
@@ -40,7 +40,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(autouse=True)
 def configure_model(request):
     """
-    Fixture to configure the DSPy library with a particular configured model and adapter
+    Fixture to configure the aletheia library with a particular configured model and adapter
     before executing a test case.
     """
     module_dir = os.path.dirname(os.path.abspath(__file__))
@@ -51,8 +51,8 @@ def configure_model(request):
     model_name, should_ignore_failure = request.param
     model_params = reliability_conf.models.get(model_name)
     if model_params:
-        lm = dspy.LM(**model_params)
-        dspy.configure(lm=lm, adapter=adapter)
+        lm = aletheia.LM(**model_params)
+        aletheia.configure(lm=lm, adapter=adapter)
     else:
         pytest.skip(
             f"Skipping test because no reliability testing YAML configuration was found"

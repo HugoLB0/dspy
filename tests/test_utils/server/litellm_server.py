@@ -10,7 +10,7 @@ from litellm.types.utils import GenericStreamingChunk
 LITELLM_TEST_SERVER_LOG_FILE_PATH_ENV_VAR = "LITELLM_TEST_SERVER_LOG_FILE_PATH"
 
 
-class DSPyTestModel(CustomLLM):
+class aletheiaTestModel(CustomLLM):
     def completion(self, *args, **kwargs) -> litellm.ModelResponse:
         _append_request_to_log_file(kwargs)
         return _get_mock_llm_response(kwargs)
@@ -86,4 +86,4 @@ def _append_request_to_log_file(completion_kwargs):
         f.write("\n")
 
 
-dspy_test_model = DSPyTestModel()
+aletheia_test_model = aletheiaTestModel()

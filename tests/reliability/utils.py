@@ -7,7 +7,7 @@ import pydantic
 import pytest
 import yaml
 
-import dspy
+import aletheia
 
 JUDGE_MODEL_NAME = "judge"
 
@@ -18,19 +18,19 @@ def assert_program_output_correct(
     grading_guidelines: Union[str, List[str]],
 ):
     """
-    With the help of an LLM judge, assert that the specified output of a DSPy program is correct,
+    With the help of an LLM judge, assert that the specified output of a aletheia program is correct,
     according to the specified grading guidelines.
 
     Args:
-        program_input: The input to a DSPy program.
-        program_output: The output from the DSPy program.
+        program_input: The input to a aletheia program.
+        program_output: The output from the aletheia program.
         grading_guidelines: The grading guidelines for judging the correctness of the
                             program output.
     """
     if not isinstance(grading_guidelines, list):
         grading_guidelines = [grading_guidelines]
 
-    with judge_dspy_configuration():
+    with judge_aletheia_configuration():
         for guideline_entry in grading_guidelines:
             judge_response = _get_judge_program()(
                 program_input=str(program_input),
@@ -63,9 +63,9 @@ def known_failing_models(models: List[str]):
 
 
 @contextmanager
-def judge_dspy_configuration(**extra_judge_config):
+def judge_aletheia_configuration(**extra_judge_config):
     """
-    Context manager to temporarily configure the DSPy to use the the judge model
+    Context manager to temporarily configure the aletheia to use the the judge model
     from `reliability_conf.yaml`.
 
     Args:
@@ -80,7 +80,7 @@ def judge_dspy_configuration(**extra_judge_config):
     if judge_params is None:
         raise ValueError(f"No LiteLLM configuration found for judge model: {JUDGE_MODEL_NAME}")
 
-    with dspy.settings.context(lm=dspy.LM(**judge_params, **extra_judge_config), adapter=adapter):
+    with aletheia.settings.context(lm=aletheia.LM(**judge_params, **extra_judge_config), adapter=adapter):
         yield
 
 
@@ -89,7 +89,7 @@ def _get_judge_program():
         correct: bool = pydantic.Field("Whether or not the judge output is correct")
         justification: str = pydantic.Field("Justification for the correctness of the judge output")
 
-    class JudgeSignature(dspy.Signature):
+    class JudgeSignature(aletheia.Signature):
         """
         Given the input and output of an AI program, determine whether the output is correct,
         according to the provided guidelines. Only consider the guidelines when determining correctness.
@@ -98,19 +98,19 @@ def _get_judge_program():
         you don't miss certain fields or values.
         """
 
-        program_input: str = dspy.InputField(description="The input to an AI program / model that is being judged")
-        program_output: str = dspy.InputField(
+        program_input: str = aletheia.InputField(description="The input to an AI program / model that is being judged")
+        program_output: str = aletheia.InputField(
             description="The resulting output from the AI program / model that is being judged"
         )
-        guidelines: str = dspy.InputField(
+        guidelines: str = aletheia.InputField(
             description=(
                 "Grading guidelines for judging the correctness of the program output."
                 " If the output satisfies the guidelines, the judge will return correct=True."
             )
         )
-        judge_response: JudgeResponse = dspy.OutputField()
+        judge_response: JudgeResponse = aletheia.OutputField()
 
-    return dspy.Predict(JudgeSignature)
+    return aletheia.Predict(JudgeSignature)
 
 
 class ReliabilityTestConf(pydantic.BaseModel):
@@ -143,10 +143,10 @@ def parse_reliability_conf_yaml(conf_file_path: str) -> ReliabilityTestConf:
         raise ValueError(f"Error parsing LiteLLM configuration file: {conf_file_path}") from e
 
 
-def get_adapter(reliability_conf: ReliabilityTestConf) -> dspy.Adapter:
+def get_adapter(reliability_conf: ReliabilityTestConf) -> aletheia.Adapter:
     if reliability_conf.adapter.lower() == "chat":
-        return dspy.ChatAdapter()
+        return aletheia.ChatAdapter()
     elif reliability_conf.adapter.lower() == "json":
-        return dspy.JSONAdapter()
+        return aletheia.JSONAdapter()
     else:
         raise ValueError(f"Unknown adapter specification '{reliability_conf.adapter}' in reliability_conf.yaml")

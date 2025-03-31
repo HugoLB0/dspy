@@ -1,7 +1,7 @@
 # from dsp.modules.sentence_vectorizer import FastEmbedVectorizer
 # import pytest
 
-# from dspy.primitives.example import Example
+# from aletheia.primitives.example import Example
 
 # # Skip the test if the 'fastembed' package is not installed
 # pytest.importorskip("fastembed", reason="'fastembed' is not installed. Use `pip install fastembed` to install it.")

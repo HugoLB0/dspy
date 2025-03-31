@@ -2,9 +2,9 @@ import logging
 
 import pytest
 
-import dspy
-from dspy.datasets import HotPotQA
-from dspy.utils.dummies import DummyLM
+import aletheia
+from aletheia.datasets import HotPotQA
+from aletheia.utils.dummies import DummyLM
 
 try:
     from llama_index.core import Settings, VectorStoreIndex
@@ -12,7 +12,7 @@ try:
     from llama_index.core.embeddings.mock_embed_model import MockEmbedding
     from llama_index.core.readers.string_iterable import StringIterableReader
 
-    from dspy.retrieve.llama_index_rm import LlamaIndexRM
+    from aletheia.retrieve.llama_index_rm import LlamaIndexRM
 
 except ImportError:
     logging.info("Optional dependency llama-index is not installed - skipping LlamaIndexRM tests.")
@@ -50,25 +50,25 @@ def test_lirm_as_rm(rag_setup):
     retriever = rag_setup.get("retriever")
     test_res_li = retriever.retrieve("At My Window was released by which American singer-songwriter?")
     rm = rag_setup.get("rm")
-    test_res_dspy = rm.forward("At My Window was released by which American singer-songwriter?")
+    test_res_aletheia = rm.forward("At My Window was released by which American singer-songwriter?")
 
     assert isinstance(retriever, BaseRetriever), "Ensuring that the retriever is a LI Retriever object"
     assert isinstance(test_res_li, list), "Ensuring results are a list from LI Retriever"
 
-    assert isinstance(rm, dspy.Retrieve), "Ensuring the RM is a retriever object from dspy"
-    assert isinstance(test_res_dspy, list), "Ensuring the results are a list from the DSPy retriever"
+    assert isinstance(rm, aletheia.Retrieve), "Ensuring the RM is a retriever object from aletheia"
+    assert isinstance(test_res_aletheia, list), "Ensuring the results are a list from the aletheia retriever"
 
-    assert len(test_res_li) == len(test_res_dspy), "Rough equality check of the results"
+    assert len(test_res_li) == len(test_res_aletheia), "Rough equality check of the results"
 
 
 def test_save_load_llama_index_rag(rag_setup, tmp_path):
     pytest.importorskip("llama_index")
 
-    class RAG(dspy.Module):
+    class RAG(aletheia.Module):
         def __init__(self):
             super().__init__()
-            self.retriever = dspy.Retrieve(k=3)
-            self.cot = dspy.ChainOfThought("question, context -> answer")
+            self.retriever = aletheia.Retrieve(k=3)
+            self.cot = aletheia.ChainOfThought("question, context -> answer")
 
     rag = RAG()
     rag.retriever.k = 4

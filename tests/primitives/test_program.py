@@ -1,13 +1,13 @@
-import dspy
-from dspy.primitives.program import Module, set_attribute_by_name  # Adjust the import based on your file structure
-from dspy.utils import DummyLM
+import aletheia
+from aletheia.primitives.program import Module, set_attribute_by_name  # Adjust the import based on your file structure
+from aletheia.utils import DummyLM
 
 
-class HopModule(dspy.Module):
+class HopModule(aletheia.Module):
     def __init__(self):
         super().__init__()
-        self.predict1 = dspy.Predict("question -> query")
-        self.predict2 = dspy.Predict("query -> answer")
+        self.predict1 = aletheia.Predict("question -> query")
+        self.predict2 = aletheia.Predict("query -> answer")
 
     def forward(self, question):
         query = self.predict1(question=question).query
@@ -31,12 +31,12 @@ def test_predictors():
     module = HopModule()
     preds = module.predictors()
     assert len(preds) == 2, "Should return correct number of Predict instances"
-    assert all(isinstance(p, dspy.Predict) for p in preds), "All returned items should be instances of PredictMock"
+    assert all(isinstance(p, aletheia.Predict) for p in preds), "All returned items should be instances of PredictMock"
 
 
 def test_forward():
     program = HopModule()
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM(
             {
                 "What is 1+1?": {"query": "let me check"},
@@ -49,7 +49,7 @@ def test_forward():
 
 
 def test_nested_named_predictors():
-    class Hop2Module(dspy.Module):
+    class Hop2Module(aletheia.Module):
         def __init__(self):
             super().__init__()
             self.hop = HopModule()
@@ -167,7 +167,7 @@ def test_complex_module_set_attribute_by_name():
 class DuplicateModule(Module):
     def __init__(self):
         super().__init__()
-        self.p0 = dspy.Predict("question -> answer")
+        self.p0 = aletheia.Predict("question -> answer")
         self.p1 = self.p0
 
 

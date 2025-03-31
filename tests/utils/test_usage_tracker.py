@@ -1,8 +1,8 @@
 import pytest
-import dspy
+import aletheia
 from unittest.mock import Mock, patch, MagicMock
-from dspy.utils.usage_tracker import UsageTracker, track_usage
-from dspy.utils.dummies import DummyLM
+from aletheia.utils.usage_tracker import UsageTracker, track_usage
+from aletheia.utils.dummies import DummyLM
 import os
 
 
@@ -142,10 +142,10 @@ def test_track_usage_with_multiple_models():
     reason="Skip the test if OPENAI_API_KEY is not set.",
 )
 def test_track_usage_context_manager():
-    lm = dspy.LM("openai/gpt-4o-mini", cache=False)
-    dspy.settings.configure(lm=lm)
+    lm = aletheia.LM("openai/gpt-4o-mini", cache=False)
+    aletheia.settings.configure(lm=lm)
 
-    predict = dspy.ChainOfThought("question -> answer")
+    predict = aletheia.ChainOfThought("question -> answer")
     with track_usage() as tracker:
         predict(question="What is the capital of France?")
         predict(question="What is the capital of Italy?")

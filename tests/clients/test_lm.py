@@ -4,7 +4,7 @@ import litellm
 import pydantic
 import pytest
 
-import dspy
+import aletheia
 from tests.test_utils.server import litellm_test_server, read_litellm_test_server_request_logs
 
 
@@ -12,16 +12,16 @@ def test_chat_lms_can_be_queried(litellm_test_server):
     api_base, _ = litellm_test_server
     expected_response = ["Hi!"]
 
-    openai_lm = dspy.LM(
-        model="openai/dspy-test-model",
+    openai_lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         model_type="chat",
     )
     assert openai_lm("openai query") == expected_response
 
-    azure_openai_lm = dspy.LM(
-        model="azure/dspy-test-model",
+    azure_openai_lm = aletheia.LM(
+        model="azure/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         model_type="chat",
@@ -42,8 +42,8 @@ def test_chat_lms_cache(litellm_test_server, cache, cache_in_memory):
     api_base, _ = litellm_test_server
     expected_response = ["Hi!"]
 
-    openai_lm = dspy.LM(
-        model="openai/dspy-test-model",
+    openai_lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         model_type="chat",
@@ -57,16 +57,16 @@ def test_text_lms_can_be_queried(litellm_test_server):
     api_base, _ = litellm_test_server
     expected_response = ["Hi!"]
 
-    openai_lm = dspy.LM(
-        model="openai/dspy-test-model",
+    openai_lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         model_type="text",
     )
     assert openai_lm("openai query") == expected_response
 
-    azure_openai_lm = dspy.LM(
-        model="azure/dspy-test-model",
+    azure_openai_lm = aletheia.LM(
+        model="azure/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         model_type="text",
@@ -79,8 +79,8 @@ def test_lm_calls_support_callables(litellm_test_server):
 
     with mock.patch("litellm.completion", autospec=True, wraps=litellm.completion) as spy_completion:
         azure_ad_token_provider = lambda *args, **kwargs: None
-        lm_with_callable = dspy.LM(
-            model="openai/dspy-test-model",
+        lm_with_callable = aletheia.LM(
+            model="openai/aletheia-test-model",
             api_base=api_base,
             api_key="fakekey",
             azure_ad_token_provider=azure_ad_token_provider,
@@ -89,7 +89,7 @@ def test_lm_calls_support_callables(litellm_test_server):
 
         spy_completion.assert_called_once()
         call_args = spy_completion.call_args.kwargs
-        assert call_args["model"] == "openai/dspy-test-model"
+        assert call_args["model"] == "openai/aletheia-test-model"
         assert call_args["api_base"] == api_base
         assert call_args["api_key"] == "fakekey"
         assert call_args["azure_ad_token_provider"] is azure_ad_token_provider
@@ -101,8 +101,8 @@ def test_lm_calls_support_pydantic_models(litellm_test_server):
     class ResponseFormat(pydantic.BaseModel):
         response: str
 
-    lm = dspy.LM(
-        model="openai/dspy-test-model",
+    lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         response_format=ResponseFormat,
@@ -132,8 +132,8 @@ def test_lm_chat_calls_are_retried_for_expected_failures(
 ):
     api_base, server_log_file_path = litellm_test_server
 
-    openai_lm = dspy.LM(
-        model="openai/dspy-test-model",
+    openai_lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         num_retries=expected_num_retries,
@@ -168,8 +168,8 @@ def test_lm_text_calls_are_retried_for_expected_failures(
 ):
     api_base, server_log_file_path = litellm_test_server
 
-    openai_lm = dspy.LM(
-        model="openai/dspy-test-model",
+    openai_lm = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
         num_retries=expected_num_retries,
@@ -194,7 +194,7 @@ def test_reasoning_model_token_parameter():
     ]
 
     for model_name, is_reasoning_model in test_cases:
-        lm = dspy.LM(
+        lm = aletheia.LM(
             model=model_name,
             temperature=1.0 if is_reasoning_model else 0.7,
             max_tokens=5000 if is_reasoning_model else 1000,
@@ -212,7 +212,7 @@ def test_reasoning_model_token_parameter():
 def test_reasoning_model_requirements():
     # Should raise assertion error if temperature or max_tokens requirements not met
     with pytest.raises(AssertionError) as exc_info:
-        dspy.LM(
+        aletheia.LM(
             model="openai/o1",
             temperature=0.7,  # Should be 1.0
             max_tokens=1000,  # Should be >= 5000
@@ -220,7 +220,7 @@ def test_reasoning_model_requirements():
     assert "reasoning models require passing temperature=1.0 and max_tokens >= 5000" in str(exc_info.value)
 
     # Should pass with correct parameters
-    lm = dspy.LM(
+    lm = aletheia.LM(
         model="openai/o1",
         temperature=1.0,
         max_tokens=5000,
@@ -228,7 +228,7 @@ def test_reasoning_model_requirements():
     assert lm.kwargs["max_completion_tokens"] == 5000
 
 def test_dump_state():
-    lm = dspy.LM(
+    lm = aletheia.LM(
         model="openai/gpt-4o-mini", 
         model_type="chat",
         temperature=1,

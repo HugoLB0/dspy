@@ -1,4 +1,4 @@
-import dspy
+import aletheia
 import random
 from datasets import load_dataset
 from .base_task import BaseTask
@@ -35,7 +35,7 @@ for x in dataset["train"]:
     x["answer"] = x["target"]
     del x["target"]
 
-    fullset.append(dspy.Example(**x).with_inputs(*inputs))
+    fullset.append(aletheia.Example(**x).with_inputs(*inputs))
 
 random.Random(0).shuffle(fullset)
 
@@ -44,34 +44,34 @@ devset = trainset
 testset = fullset[120:]
 
 
-class HeartDiseaseInput(dspy.Signature):
-    age = dspy.InputField(desc="Age in years")
-    sex = dspy.InputField(desc="Sex (male or female)")
-    cp = dspy.InputField(
+class HeartDiseaseInput(aletheia.Signature):
+    age = aletheia.InputField(desc="Age in years")
+    sex = aletheia.InputField(desc="Sex (male or female)")
+    cp = aletheia.InputField(
         desc="Chest pain type (typical angina, atypical angina, non-anginal pain, asymptomatic)"
     )
-    trestbps = dspy.InputField(
+    trestbps = aletheia.InputField(
         desc="Resting blood pressure (in mm Hg on admission to the hospital)"
     )
-    chol = dspy.InputField(desc="Serum cholesterol in mg/dl")  # Nov 2nd, 2024: fixed typo from `cholesteral`
-    fbs = dspy.InputField(desc="Fasting blood sugar > 120 mg/dl (true or false)")
-    restecg = dspy.InputField(
+    chol = aletheia.InputField(desc="Serum cholesterol in mg/dl")  # Nov 2nd, 2024: fixed typo from `cholesteral`
+    fbs = aletheia.InputField(desc="Fasting blood sugar > 120 mg/dl (true or false)")
+    restecg = aletheia.InputField(
         desc="Resting electrocardiographic results (normal, ST-T wave abnormality, left ventricular hypertrophy)"
     )
-    thalach = dspy.InputField(desc="Maximum heart rate achieved")
-    exang = dspy.InputField(desc="Exercise induced angina (yes or no)")
-    oldpeak = dspy.InputField(desc="ST depression induced by exercise relative to rest")
-    slope = dspy.InputField(
+    thalach = aletheia.InputField(desc="Maximum heart rate achieved")
+    exang = aletheia.InputField(desc="Exercise induced angina (yes or no)")
+    oldpeak = aletheia.InputField(desc="ST depression induced by exercise relative to rest")
+    slope = aletheia.InputField(
         desc="The slope of the peak exercise ST segment (upsloping, flat, downsloping)"
     )
-    ca = dspy.InputField(desc="Number of major vessels (0-3) colored by flourosopy")
-    thal = dspy.InputField(desc="Thalassemia (normal, fixed defect, reversible defect)")
+    ca = aletheia.InputField(desc="Number of major vessels (0-3) colored by flourosopy")
+    thal = aletheia.InputField(desc="Thalassemia (normal, fixed defect, reversible defect)")
 
 
 class HeartDiseaseSignature(HeartDiseaseInput):
     """Given patient information, predict the presence of heart disease."""
 
-    answer = dspy.OutputField(
+    answer = aletheia.OutputField(
         desc="Does this patient have heart disease? Just yes or no."
     )
 
@@ -79,19 +79,19 @@ class HeartDiseaseSignature(HeartDiseaseInput):
 class HeartDiseaseVote(HeartDiseaseInput):
     """Given patient information, predict the presence of heart disease. I can critically assess the provided trainee opinions."""
 
-    context = dspy.InputField(desc="A list of opinions from trainee doctors.")
-    answer = dspy.OutputField(
+    context = aletheia.InputField(desc="A list of opinions from trainee doctors.")
+    answer = aletheia.OutputField(
         desc="Does this patient have heart disease? Just yes or no."
     )
 
 
-class Classify(dspy.Module):
+class Classify(aletheia.Module):
     def __init__(self):
         self.classify = [
-            dspy.ChainOfThought(HeartDiseaseSignature, temperature=0.7 + i * 0.01)
+            aletheia.ChainOfThought(HeartDiseaseSignature, temperature=0.7 + i * 0.01)
             for i in range(3)
         ]
-        self.vote = dspy.ChainOfThought(HeartDiseaseVote)
+        self.vote = aletheia.ChainOfThought(HeartDiseaseVote)
 
     def forward(
         self,
@@ -143,7 +143,7 @@ class HeartDiseaseTask(BaseTask):
         self.trainset = trainset
         self.devset = devset
         self.testset = testset
-        self.metric = dspy.evaluate.answer_exact_match
+        self.metric = aletheia.evaluate.answer_exact_match
 
     def get_program(self):
         return Classify()

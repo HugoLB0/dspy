@@ -11,8 +11,8 @@
 /examples/qa/hotpot/MIPRO_notebook_cache/
 /examples/nli/scone/MIPRO_notebook_cache/
 /examples/nli/scone/ScoNe/
-/examples/nli/scone/compiled_program.dspy
-/examples/qa/hotpot/compiled_program.dspy
+/examples/nli/scone/compiled_program.aletheia
+/examples/qa/hotpot/compiled_program.aletheia
 /ScoNe/
 testing/outputs/
 testing/playbook.ipynb

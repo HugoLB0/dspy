@@ -4,7 +4,7 @@ import random
 
 import pandas as pd
 
-import dspy
+import aletheia
 
 from .base_task import BaseTask
 
@@ -27,7 +27,7 @@ def load_scone(dirname):
         question = f"Can we logically conclude for sure that {question}?"
         # Binary task formulation:
         label = "Yes" if row["gold_label" + suffix] == "entailment" else "No"
-        return dspy.Example(
+        return aletheia.Example(
             {
                 "context": row["sentence1" + suffix],
                 "question": question,
@@ -39,18 +39,18 @@ def load_scone(dirname):
     return list(data_df.apply(as_example, axis=1).values)
 
 
-class ScoNeSignature(dspy.Signature):
+class ScoNeSignature(aletheia.Signature):
     ("""context, question -> answer""")
 
-    context = dspy.InputField()
-    question = dspy.InputField()
-    answer = dspy.OutputField(desc="Yes or No")
+    context = aletheia.InputField()
+    question = aletheia.InputField()
+    answer = aletheia.OutputField(desc="Yes or No")
 
 
-class ScoNeCoT(dspy.Module):
+class ScoNeCoT(aletheia.Module):
     def __init__(self):
         super().__init__()
-        self.generate_answer = dspy.ChainOfThought(ScoNeSignature)
+        self.generate_answer = aletheia.ChainOfThought(ScoNeSignature)
 
     def forward(self, context, question):
         return self.generate_answer(context=context, question=question)
@@ -71,7 +71,7 @@ class ScoNeTask(BaseTask):
         # 1000 random train, 500 random dev:
         self.trainset, self.testset = all_train[:1000], all_train[1000:1500]
 
-        metric_EM = dspy.evaluate.answer_exact_match
+        metric_EM = aletheia.evaluate.answer_exact_match
         self.metric = metric_EM
 
         self.set_splits(TRAIN_NUM=100, DEV_NUM=100, TEST_NUM=100)

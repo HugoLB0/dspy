@@ -3,16 +3,16 @@ import random
 import tqdm
 from datasets import load_dataset
 
-import dspy
-from dspy.datasets.gsm8k import gsm8k_metric
+import aletheia
+from aletheia.datasets.gsm8k import gsm8k_metric
 
 from .base_task import BaseTask
 
 
-class CoT(dspy.Module):
+class CoT(aletheia.Module):
     def __init__(self):
         super().__init__()
-        self.prog = dspy.ChainOfThought("question -> answer")
+        self.prog = aletheia.ChainOfThought("question -> answer")
 
     def forward(self, question):
         return self.prog(question=question)
@@ -63,9 +63,9 @@ class GSM8KTask(BaseTask):
         devset = official_train[2000:2500]
         testset = official_test[:]
 
-        trainset = [dspy.Example(**x).with_inputs("question") for x in trainset]
-        devset = [dspy.Example(**x).with_inputs("question") for x in devset]
-        testset = [dspy.Example(**x).with_inputs("question") for x in testset]
+        trainset = [aletheia.Example(**x).with_inputs("question") for x in trainset]
+        devset = [aletheia.Example(**x).with_inputs("question") for x in devset]
+        testset = [aletheia.Example(**x).with_inputs("question") for x in testset]
 
         self.trainset = trainset
         self.devset = devset

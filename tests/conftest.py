@@ -10,10 +10,10 @@ def clear_settings():
 
     yield
 
-    import dspy
-    from dspy.dsp.utils.settings import DEFAULT_CONFIG
+    import aletheia
+    from aletheia.dsp.utils.settings import DEFAULT_CONFIG
 
-    dspy.settings.configure(**copy.deepcopy(DEFAULT_CONFIG), inherit_config=False)
+    aletheia.settings.configure(**copy.deepcopy(DEFAULT_CONFIG), inherit_config=False)
 
 
 @pytest.fixture

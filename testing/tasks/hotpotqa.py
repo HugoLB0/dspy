@@ -1,23 +1,23 @@
-import dspy
-from dspy.datasets import HotPotQA
-from dspy.evaluate import Evaluate
+import aletheia
+from aletheia.datasets import HotPotQA
+from aletheia.evaluate import Evaluate
 
 from .base_task import BaseTask
 
 
-class MultiHop(dspy.Module):
+class MultiHop(aletheia.Module):
     def __init__(self, passages_per_hop):
         super().__init__()
-        self.retrieve = dspy.Retrieve(k=passages_per_hop)
-        self.generate_query = dspy.ChainOfThought("context ,question->search_query")
-        self.generate_answer = dspy.ChainOfThought("context ,question->answer")
+        self.retrieve = aletheia.Retrieve(k=passages_per_hop)
+        self.generate_query = aletheia.ChainOfThought("context ,question->search_query")
+        self.generate_answer = aletheia.ChainOfThought("context ,question->answer")
 
     def forward(self, question):
         context = []
         for hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
-        return dspy.Prediction(
+        return aletheia.Prediction(
             context=context,
             answer=self.generate_answer(context=context, question=question).answer,
         )
@@ -34,14 +34,14 @@ class HotPotQATask(BaseTask):
         # Set up metrics
         NUM_THREADS = 16
 
-        metric_EM = dspy.evaluate.answer_exact_match
+        metric_EM = aletheia.evaluate.answer_exact_match
         self.metric = metric_EM
 
         def gold_passages_retrieved(example, pred, trace=None):
-            gold_titles = set(map(dspy.evaluate.normalize_text, example["gold_titles"]))
+            gold_titles = set(map(aletheia.evaluate.normalize_text, example["gold_titles"]))
             found_titles = set(
                 map(
-                    dspy.evaluate.normalize_text,
+                    aletheia.evaluate.normalize_text,
                     [c.split(" | ")[0] for c in pred.context],
                 )
             )

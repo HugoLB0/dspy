@@ -2,19 +2,19 @@ import time
 
 import pytest
 
-import dspy
-from dspy.utils.callback import ACTIVE_CALL_ID, BaseCallback, with_callbacks
-from dspy.utils.dummies import DummyLM
+import aletheia
+from aletheia.utils.callback import ACTIVE_CALL_ID, BaseCallback, with_callbacks
+from aletheia.utils.dummies import DummyLM
 
 
 @pytest.fixture(autouse=True)
 def reset_settings():
     # Make sure the settings are reset after each test
-    original_settings = dspy.settings.copy()
+    original_settings = aletheia.settings.copy()
 
     yield
 
-    dspy.settings.configure(**original_settings)
+    aletheia.settings.configure(**original_settings)
 
 
 class MyCallback(BaseCallback):
@@ -64,14 +64,14 @@ class MyCallback(BaseCallback):
     ],
 )
 def test_callback_injection(args, kwargs):
-    class Target(dspy.Module):
+    class Target(aletheia.Module):
         @with_callbacks
         def forward(self, x: int, y: str, z: float) -> int:
             time.sleep(0.1)
             return x + int(y) + int(z)
 
     callback = MyCallback()
-    dspy.settings.configure(callbacks=[callback])
+    aletheia.settings.configure(callbacks=[callback])
 
     target = Target()
     result = target.forward(*args, **kwargs)
@@ -86,7 +86,7 @@ def test_callback_injection(args, kwargs):
 
 
 def test_callback_injection_local():
-    class Target(dspy.Module):
+    class Target(aletheia.Module):
         @with_callbacks
         def forward(self, x: int, y: str, z: float) -> int:
             time.sleep(0.1)
@@ -115,14 +115,14 @@ def test_callback_injection_local():
 
 
 def test_callback_error_handling():
-    class Target(dspy.Module):
+    class Target(aletheia.Module):
         @with_callbacks
         def forward(self, x: int, y: str, z: float) -> int:
             time.sleep(0.1)
             raise ValueError("Error")
 
     callback = MyCallback()
-    dspy.settings.configure(callbacks=[callback])
+    aletheia.settings.configure(callbacks=[callback])
 
     target = Target()
 
@@ -136,7 +136,7 @@ def test_callback_error_handling():
 
 
 def test_multiple_callbacks():
-    class Target(dspy.Module):
+    class Target(aletheia.Module):
         @with_callbacks
         def forward(self, x: int, y: str, z: float) -> int:
             time.sleep(0.1)
@@ -144,7 +144,7 @@ def test_multiple_callbacks():
 
     callback_1 = MyCallback()
     callback_2 = MyCallback()
-    dspy.settings.configure(callbacks=[callback_1, callback_2])
+    aletheia.settings.configure(callbacks=[callback_1, callback_2])
 
     target = Target()
     result = target.forward(1, "2", 3.0)
@@ -157,12 +157,12 @@ def test_multiple_callbacks():
 
 def test_callback_complex_module():
     callback = MyCallback()
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM({"How are you?": {"answer": "test output", "reasoning": "No more responses"}}),
         callbacks=[callback],
     )
 
-    cot = dspy.ChainOfThought("question -> answer", n=3)
+    cot = aletheia.ChainOfThought("question -> answer", n=3)
     result = cot(question="How are you?")
     assert result["answer"] == "test output"
     assert result["reasoning"] == "No more responses"
@@ -189,7 +189,7 @@ def test_callback_complex_module():
 
 def test_tool_calls():
     callback = MyCallback()
-    dspy.settings.configure(callbacks=[callback])
+    aletheia.settings.configure(callbacks=[callback])
 
     def tool_1(query: str) -> str:
         """A dummy tool function."""
@@ -199,9 +199,9 @@ def test_tool_calls():
         """Another dummy tool function."""
         return "result 2"
 
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
-            self.tools = [dspy.Tool(tool_1), dspy.Tool(tool_2)]
+            self.tools = [aletheia.Tool(tool_1), aletheia.Tool(tool_2)]
 
         def forward(self, query: str) -> str:
             query = self.tools[0](query=query)
@@ -234,7 +234,7 @@ def test_active_id():
             self.parent_call_ids.append(parent_call_id)
             self.call_ids.append(call_id)
 
-    class Parent(dspy.Module):
+    class Parent(aletheia.Module):
         def __init__(self):
             self.child_1 = Child()
             self.child_2 = Child()
@@ -243,12 +243,12 @@ def test_active_id():
             self.child_1()
             self.child_2()
 
-    class Child(dspy.Module):
+    class Child(aletheia.Module):
         def forward(self):
             pass
 
     callback = CustomCallback()
-    dspy.settings.configure(callbacks=[callback])
+    aletheia.settings.configure(callbacks=[callback])
 
     parent = Parent()
     parent()

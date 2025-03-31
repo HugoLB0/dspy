@@ -1,11 +1,11 @@
-import dspy
+import aletheia
 import re
 
 
 def test_metadata():
-    assert dspy.__name__ == "dspy"
-    assert re.match(r"\d+\.\d+\.\d+", dspy.__version__)
-    assert dspy.__author__ == "Omar Khattab"
-    assert dspy.__author_email__ == "okhattab@stanford.edu"
-    assert dspy.__url__ == "https://github.com/stanfordnlp/dspy"
-    assert dspy.__description__ == "DSPy"
+    assert aletheia.__name__ == "aletheia"
+    assert re.match(r"\d+\.\d+\.\d+", aletheia.__version__)
+    assert aletheia.__author__ == "Omar Khattab"
+    assert aletheia.__author_email__ == "okhattab@stanford.edu"
+    assert aletheia.__url__ == "https://github.com/stanfordnlp/aletheia"
+    assert aletheia.__description__ == "aletheia"

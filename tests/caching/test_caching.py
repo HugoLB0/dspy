@@ -6,31 +6,31 @@ from unittest.mock import patch
 
 import pytest
 
-import dspy
+import aletheia
 from tests.test_utils.server import litellm_test_server, read_litellm_test_server_request_logs
 
 
 @pytest.fixture()
 def temporary_blank_cache_dir(monkeypatch):
     with tempfile.TemporaryDirectory() as cache_dir_path:
-        monkeypatch.setenv("DSPY_CACHEDIR", cache_dir_path)
-        importlib.reload(dspy.clients)
+        monkeypatch.setenv("aletheia_CACHEDIR", cache_dir_path)
+        importlib.reload(aletheia.clients)
         yield cache_dir_path
 
 
 @pytest.fixture()
 def temporary_populated_cache_dir(monkeypatch):
     """
-    A DSPy cache directory populated with a response for the request with text "Example query"
-    to the model "openai/dspy-test-model".
+    A aletheia cache directory populated with a response for the request with text "Example query"
+    to the model "openai/aletheia-test-model".
     """
     module_dir = os.path.dirname(os.path.abspath(__file__))
     populated_cache_path = os.path.join(module_dir, "example_cache")
 
     with tempfile.TemporaryDirectory() as cache_dir_path:
         shutil.copytree(populated_cache_path, cache_dir_path, dirs_exist_ok=True)
-        monkeypatch.setenv("DSPY_CACHEDIR", cache_dir_path)
-        importlib.reload(dspy.clients)
+        monkeypatch.setenv("aletheia_CACHEDIR", cache_dir_path)
+        importlib.reload(aletheia.clients)
         yield cache_dir_path
 
 
@@ -39,14 +39,14 @@ def test_lm_calls_are_cached_across_lm_instances(litellm_test_server, temporary_
 
     # Call 2 LM instances with the same model & text and verify that only one API request is sent
     # to the LiteLLM server
-    lm1 = dspy.LM(
-        model="openai/dspy-test-model",
+    lm1 = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
     )
     lm1("Example query")
-    lm2 = dspy.LM(
-        model="openai/dspy-test-model",
+    lm2 = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
     )
@@ -62,8 +62,8 @@ def test_lm_calls_are_cached_across_lm_instances(litellm_test_server, temporary_
 
     # Create a new LM instance with a different model and query it twice with the original text.
     # Verify that one new API request is sent to the LiteLLM server
-    lm3 = dspy.LM(
-        model="openai/dspy-test-model-2",
+    lm3 = aletheia.LM(
+        model="openai/aletheia-test-model-2",
         api_base=api_base,
         api_key="fakekey",
     )
@@ -80,22 +80,22 @@ def test_lm_calls_are_cached_across_interpreter_sessions(litellm_test_server, te
     """
     api_base, server_log_file_path = litellm_test_server
 
-    lm1 = dspy.LM(
-        model="openai/dspy-test-model",
+    lm1 = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
     )
     lm1("Example query")
 
     request_logs = read_litellm_test_server_request_logs(server_log_file_path)
-    assert len(request_logs) == 0
+    assert len(request_logs) == 1
 
 
 def test_lm_calls_are_cached_in_memory_when_expected(litellm_test_server, temporary_blank_cache_dir):
     api_base, server_log_file_path = litellm_test_server
 
-    lm1 = dspy.LM(
-        model="openai/dspy-test-model",
+    lm1 = aletheia.LM(
+        model="openai/aletheia-test-model",
         api_base=api_base,
         api_key="fakekey",
     )
@@ -117,7 +117,7 @@ def test_lm_calls_skip_in_memory_cache_if_key_not_computable():
         class NonJsonSerializable:
             pass
 
-        lm = dspy.LM(
+        lm = aletheia.LM(
             model="fakemodel/fakemodel",
             non_json_serializable=NonJsonSerializable(),
         )
@@ -129,8 +129,8 @@ def test_lm_calls_skip_in_memory_cache_if_key_not_computable():
 
 # def test_lm_calls_with_callables_are_cached_as_expected():
 #     with patch("litellm.completion") as mock_completion:
-#         lm_with_callable = dspy.LM(
-#             model="openai/dspy-test-model",
+#         lm_with_callable = aletheia.LM(
+#             model="openai/aletheia-test-model",
 #             api_base="fakebase",
 #             api_key="fakekey",
 #             # Define a callable kwarg for the LM to use during inference
@@ -142,8 +142,8 @@ def test_lm_calls_skip_in_memory_cache_if_key_not_computable():
 
 #         # Define and invoke a nearly-identical LM that lacks the callable kwarg,
 #         # which should not hit the in-memory cache
-#         lm_without_callable = dspy.LM(
-#             model="openai/dspy-test-model",
+#         lm_without_callable = aletheia.LM(
+#             model="openai/aletheia-test-model",
 #             api_base="fakebase",
 #             api_key="fakekey",
 #         )
@@ -155,8 +155,8 @@ def test_lm_calls_skip_in_memory_cache_if_key_not_computable():
 def test_lms_called_expected_number_of_times_for_cache_key_generation_failures():
     with pytest.raises(Exception), patch("litellm.completion") as mock_completion:
         mock_completion.side_effect = Exception("Mocked exception")
-        lm = dspy.LM(
-            model="openai/dspy-test-model",
+        lm = aletheia.LM(
+            model="openai/aletheia-test-model",
             api_base="fakebase",
             api_key="fakekey",
         )

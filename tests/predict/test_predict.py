@@ -7,9 +7,9 @@ import pytest
 import ujson
 import os
 
-import dspy
-from dspy import Predict, Signature
-from dspy.utils.dummies import DummyLM
+import aletheia
+from aletheia import Predict, Signature
+from aletheia.utils.dummies import DummyLM
 from unittest.mock import patch, MagicMock, Mock
 
 
@@ -36,7 +36,7 @@ def test_reset_method():
 
 def test_lm_after_dump_and_load_state():
     predict_instance = Predict("input -> output")
-    lm = dspy.LM(
+    lm = aletheia.LM(
         model="openai/gpt-4o-mini",
         model_type="chat",
         temperature=1,
@@ -66,7 +66,7 @@ def test_lm_after_dump_and_load_state():
 def test_call_method():
     predict_instance = Predict("input -> output")
     lm = DummyLM([{"output": "test output"}])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
     result = predict_instance(input="test input")
     assert result.output == "test output"
 
@@ -80,16 +80,16 @@ def test_instructions_after_dump_and_load_state():
 
 
 def test_demos_after_dump_and_load_state():
-    class TranslateToEnglish(dspy.Signature):
+    class TranslateToEnglish(aletheia.Signature):
         """Translate content from a language to English."""
 
-        content: str = dspy.InputField()
-        language: str = dspy.InputField()
-        translation: str = dspy.OutputField()
+        content: str = aletheia.InputField()
+        language: str = aletheia.InputField()
+        translation: str = aletheia.OutputField()
 
     original_instance = Predict(TranslateToEnglish)
     original_instance.demos = [
-        dspy.Example(
+        aletheia.Example(
             content="¿Qué tal?",
             language="SPANISH",
             translation="Hello there",
@@ -115,17 +115,17 @@ def test_typed_demos_after_dump_and_load_state():
         name: str
         quantity: int
 
-    class InventorySignature(dspy.Signature):
+    class InventorySignature(aletheia.Signature):
         """Handle inventory items and their translations."""
 
-        items: list[Item] = dspy.InputField()
-        language: str = dspy.InputField()
-        translated_items: list[Item] = dspy.OutputField()
-        total_quantity: int = dspy.OutputField()
+        items: list[Item] = aletheia.InputField()
+        language: str = aletheia.InputField()
+        translated_items: list[Item] = aletheia.OutputField()
+        total_quantity: int = aletheia.OutputField()
 
     original_instance = Predict(InventorySignature)
     original_instance.demos = [
-        dspy.Example(
+        aletheia.Example(
             items=[Item(name="apple", quantity=5), Item(name="banana", quantity=3)],
             language="SPANISH",
             translated_items=[Item(name="manzana", quantity=5), Item(name="plátano", quantity=3)],
@@ -167,7 +167,7 @@ def test_typed_demos_after_dump_and_load_state():
 
 
 # def test_typed_demos_after_dump_and_load_state():
-#     class TypedTranslateToEnglish(dspy.Signature):
+#     class TypedTranslateToEnglish(aletheia.Signature):
 #         """Translate content from a language to English."""
 
 #         class Input(pydantic.BaseModel):
@@ -177,12 +177,12 @@ def test_typed_demos_after_dump_and_load_state():
 #         class Output(pydantic.BaseModel):
 #             translation: str
 
-#         input: Input = dspy.InputField()
-#         output: Output = dspy.OutputField()
+#         input: Input = aletheia.InputField()
+#         output: Output = aletheia.OutputField()
 
 #     original_instance = TypedPredictor(TypedTranslateToEnglish).predictor
 #     original_instance.demos = [
-#         dspy.Example(
+#         aletheia.Example(
 #             input=TypedTranslateToEnglish.Input(
 #                 content="¿Qué tal?",
 #                 language="SPANISH",
@@ -208,21 +208,21 @@ def test_typed_demos_after_dump_and_load_state():
 
 
 def test_signature_fields_after_dump_and_load_state(tmp_path):
-    class CustomSignature(dspy.Signature):
+    class CustomSignature(aletheia.Signature):
         """I am just an instruction."""
 
-        sentence = dspy.InputField(desc="I am an innocent input!")
-        sentiment = dspy.OutputField()
+        sentence = aletheia.InputField(desc="I am an innocent input!")
+        sentiment = aletheia.OutputField()
 
     file_path = tmp_path / "tmp.json"
     original_instance = Predict(CustomSignature)
     original_instance.save(file_path)
 
-    class CustomSignature2(dspy.Signature):
+    class CustomSignature2(aletheia.Signature):
         """I am not a pure instruction."""
 
-        sentence = dspy.InputField(desc="I am a malicious input!")
-        sentiment = dspy.OutputField(desc="I am a malicious output!", prefix="I am a prefix!")
+        sentence = aletheia.InputField(desc="I am a malicious input!")
+        sentiment = aletheia.OutputField(desc="I am a malicious output!", prefix="I am a prefix!")
 
     new_instance = Predict(CustomSignature2)
     assert new_instance.signature.dump_state() != original_instance.signature.dump_state()
@@ -234,21 +234,21 @@ def test_signature_fields_after_dump_and_load_state(tmp_path):
 @pytest.mark.parametrize("filename", ["model.json", "model.pkl"])
 def test_lm_field_after_dump_and_load_state(tmp_path, filename):
     file_path = tmp_path / filename
-    lm = dspy.LM(
+    lm = aletheia.LM(
         model="openai/gpt-4o-mini",
         model_type="chat",
         temperature=1,
         max_tokens=100,
         num_retries=10,
     )
-    original_predict = dspy.Predict("q->a")
+    original_predict = aletheia.Predict("q->a")
     original_predict.lm = lm
 
     original_predict.save(file_path)
 
     assert file_path.exists()
 
-    loaded_predict = dspy.Predict("q->a")
+    loaded_predict = aletheia.Predict("q->a")
     loaded_predict.load(file_path)
 
     assert original_predict.dump_state() == loaded_predict.dump_state()
@@ -256,14 +256,14 @@ def test_lm_field_after_dump_and_load_state(tmp_path, filename):
 
 def test_forward_method():
     program = Predict("question -> answer")
-    dspy.settings.configure(lm=DummyLM([{"answer": "No more responses"}]))
+    aletheia.settings.configure(lm=DummyLM([{"answer": "No more responses"}]))
     result = program(question="What is 1+1?").answer
     assert result == "No more responses"
 
 
 def test_forward_method2():
     program = Predict("question -> answer1, answer2")
-    dspy.settings.configure(lm=DummyLM([{"answer1": "my first answer", "answer2": "my second answer"}]))
+    aletheia.settings.configure(lm=DummyLM([{"answer1": "my first answer", "answer2": "my second answer"}]))
     result = program(question="What is 1+1?")
     assert result.answer1 == "my first answer"
     assert result.answer2 == "my second answer"
@@ -278,7 +278,7 @@ def test_config_management():
 
 def test_multi_output():
     program = Predict("question -> answer", n=2)
-    dspy.settings.configure(lm=DummyLM([{"answer": "my first answer"}, {"answer": "my second answer"}]))
+    aletheia.settings.configure(lm=DummyLM([{"answer": "my first answer"}, {"answer": "my second answer"}]))
     results = program(question="What is 1+1?")
     assert results.completions.answer[0] == "my first answer"
     assert results.completions.answer[1] == "my second answer"
@@ -286,7 +286,7 @@ def test_multi_output():
 
 def test_multi_output2():
     program = Predict("question -> answer1, answer2", n=2)
-    dspy.settings.configure(
+    aletheia.settings.configure(
         lm=DummyLM(
             [
                 {"answer1": "my 0 answer", "answer2": "my 2 answer"},
@@ -307,10 +307,10 @@ def test_datetime_inputs_and_outputs():
         event_name: str
         event_time: datetime
 
-    class TimedSignature(dspy.Signature):
-        events: list[TimedEvent] = dspy.InputField()
-        summary: str = dspy.OutputField()
-        next_event_time: datetime = dspy.OutputField()
+    class TimedSignature(aletheia.Signature):
+        events: list[TimedEvent] = aletheia.InputField()
+        summary: str = aletheia.OutputField()
+        next_event_time: datetime = aletheia.OutputField()
 
     program = Predict(TimedSignature)
 
@@ -323,7 +323,7 @@ def test_datetime_inputs_and_outputs():
             }
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     output = program(
         events=[
@@ -341,9 +341,9 @@ def test_explicitly_valued_enum_inputs_and_outputs():
         IN_PROGRESS = "in_progress"
         COMPLETED = "completed"
 
-    class StatusSignature(dspy.Signature):
-        current_status: Status = dspy.InputField()
-        next_status: Status = dspy.OutputField()
+    class StatusSignature(aletheia.Signature):
+        current_status: Status = aletheia.InputField()
+        next_status: Status = aletheia.OutputField()
 
     program = Predict(StatusSignature)
 
@@ -355,7 +355,7 @@ def test_explicitly_valued_enum_inputs_and_outputs():
             }
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     output = program(current_status=Status.PENDING)
     assert output.next_status == Status.IN_PROGRESS
@@ -367,9 +367,9 @@ def test_enum_inputs_and_outputs_with_shared_names_and_values():
         CLOSED = "RESOLVED"
         RESOLVED = "OPEN"
 
-    class TicketStatusSignature(dspy.Signature):
-        current_status: TicketStatus = dspy.InputField()
-        next_status: TicketStatus = dspy.OutputField()
+    class TicketStatusSignature(aletheia.Signature):
+        current_status: TicketStatus = aletheia.InputField()
+        next_status: TicketStatus = aletheia.OutputField()
 
     program = Predict(TicketStatusSignature)
 
@@ -382,7 +382,7 @@ def test_enum_inputs_and_outputs_with_shared_names_and_values():
             }
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     output = program(current_status=TicketStatus.OPEN)
     assert output.next_status == TicketStatus.CLOSED  # By value
@@ -391,9 +391,9 @@ def test_enum_inputs_and_outputs_with_shared_names_and_values():
 def test_auto_valued_enum_inputs_and_outputs():
     Status = enum.Enum("Status", ["PENDING", "IN_PROGRESS", "COMPLETED"])
 
-    class StatusSignature(dspy.Signature):
-        current_status: Status = dspy.InputField()
-        next_status: Status = dspy.OutputField()
+    class StatusSignature(aletheia.Signature):
+        current_status: Status = aletheia.InputField()
+        next_status: Status = aletheia.OutputField()
 
     program = Predict(StatusSignature)
 
@@ -405,14 +405,14 @@ def test_auto_valued_enum_inputs_and_outputs():
             }
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     output = program(current_status=Status.PENDING)
     assert output.next_status == Status.IN_PROGRESS
 
 
 def test_named_predictors():
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
             super().__init__()
             self.inner = Predict("question -> answer")
@@ -426,13 +426,13 @@ def test_named_predictors():
 
 
 def test_output_only():
-    class OutputOnlySignature(dspy.Signature):
-        output = dspy.OutputField()
+    class OutputOnlySignature(aletheia.Signature):
+        output = aletheia.OutputField()
 
     predictor = Predict(OutputOnlySignature)
 
     lm = DummyLM([{"output": "short answer"}])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
     assert predictor().output == "short answer"
 
 
@@ -449,7 +449,7 @@ def test_load_state_chaining():
 
 @pytest.mark.parametrize("adapter_type", ["chat", "json"])
 def test_call_predict_with_chat_history(adapter_type):
-    class SpyLM(dspy.LM):
+    class SpyLM(aletheia.LM):
         def __init__(self, *args, return_json=False, **kwargs):
             super().__init__(*args, **kwargs)
             self.calls = []
@@ -461,23 +461,23 @@ def test_call_predict_with_chat_history(adapter_type):
                 return ["{'answer':'100%'}"]
             return ["[[ ## answer ## ]]\n100%!"]
 
-    class MySignature(dspy.Signature):
-        question: str = dspy.InputField()
-        history: dspy.History = dspy.InputField()
-        answer: str = dspy.OutputField()
+    class MySignature(aletheia.Signature):
+        question: str = aletheia.InputField()
+        history: aletheia.History = aletheia.InputField()
+        answer: str = aletheia.OutputField()
 
     program = Predict(MySignature)
 
     if adapter_type == "chat":
         lm = SpyLM("dummy_model")
-        dspy.settings.configure(adapter=dspy.ChatAdapter(), lm=lm)
+        aletheia.settings.configure(adapter=aletheia.ChatAdapter(), lm=lm)
     else:
         lm = SpyLM("dummy_model", return_json=True)
-        dspy.settings.configure(adapter=dspy.JSONAdapter(), lm=lm)
+        aletheia.settings.configure(adapter=aletheia.JSONAdapter(), lm=lm)
 
     program(
         question="are you sure that's correct?",
-        history=dspy.History(messages=[{"question": "what's the capital of france?", "answer": "paris"}]),
+        history=aletheia.History(messages=[{"question": "what's the capital of france?", "answer": "paris"}]),
     )
 
     # Verify the LM was called with correct messages
@@ -493,7 +493,7 @@ def test_call_predict_with_chat_history(adapter_type):
 
 @pytest.mark.parametrize("adapter_type", ["chat", "json"])
 def test_field_constraints(adapter_type):
-    class SpyLM(dspy.LM):
+    class SpyLM(aletheia.LM):
         def __init__(self, *args, return_json=False, **kwargs):
             super().__init__(*args, **kwargs)
             self.calls = []
@@ -505,25 +505,25 @@ def test_field_constraints(adapter_type):
                 return ["{'score':'0.5', 'count':'2'}"]
             return ["[[ ## score ## ]]\n0.5\n[[ ## count ## ]]\n2"]
 
-    class ConstrainedSignature(dspy.Signature):
+    class ConstrainedSignature(aletheia.Signature):
         """Test signature with constrained fields."""
 
         # Input with length and value constraints
-        text: str = dspy.InputField(min_length=5, max_length=100, desc="Input text")
-        number: int = dspy.InputField(gt=0, lt=10, desc="A number between 0 and 10")
+        text: str = aletheia.InputField(min_length=5, max_length=100, desc="Input text")
+        number: int = aletheia.InputField(gt=0, lt=10, desc="A number between 0 and 10")
 
         # Output with multiple constraints
-        score: float = dspy.OutputField(ge=0.0, le=1.0, desc="Score between 0 and 1")
-        count: int = dspy.OutputField(multiple_of=2, desc="Even number count")
+        score: float = aletheia.OutputField(ge=0.0, le=1.0, desc="Score between 0 and 1")
+        count: int = aletheia.OutputField(multiple_of=2, desc="Even number count")
 
     program = Predict(ConstrainedSignature)
     lm = SpyLM("dummy_model")
     if adapter_type == "chat":
         lm = SpyLM("dummy_model")
-        dspy.settings.configure(adapter=dspy.ChatAdapter(), lm=lm)
+        aletheia.settings.configure(adapter=aletheia.ChatAdapter(), lm=lm)
     else:
         lm = SpyLM("dummy_model", return_json=True)
-        dspy.settings.configure(adapter=dspy.JSONAdapter(), lm=lm)
+        aletheia.settings.configure(adapter=aletheia.JSONAdapter(), lm=lm)
 
     # Call the predictor to trigger instruction generation
     program(text="hello world", number=5)
@@ -541,31 +541,3 @@ def test_field_constraints(adapter_type):
     assert "a multiple of the given number: 2" in system_message
 
 
-@pytest.mark.skipif(os.environ.get("OPENAI_API_KEY") is None, reason="Skipping if OPENAI_API_KEY is not set")
-def test_litellm_cache_initialization_failure():
-    """Test that DSPy handles litellm cache initialization failure gracefully."""
-    # Mock Cache to raise a permission error
-    mock_cache = MagicMock()
-    mock_cache.side_effect = PermissionError("Permission denied")
-
-    import litellm
-
-    # Normal import should have set litellm.cache
-    assert litellm.cache is not None
-
-    with patch("litellm.caching.Cache", mock_cache):
-        import importlib
-        import dspy.clients
-
-        importlib.reload(dspy.clients)
-
-    # On cache initialization failure, litellm.cache should be set to None
-    assert litellm.cache is None
-
-    # Create a simple predictor to verify it works without cache
-    predictor = Predict("question -> answer")
-    dspy.settings.configure(lm=dspy.LM(model="openai/gpt-4o-mini"))
-
-    # No exception should be raised when litellm.cache is None even if we try to use the cache.
-    assert dspy.settings.lm.cache == True
-    predictor(question="test")

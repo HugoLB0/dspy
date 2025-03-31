@@ -1,6 +1,6 @@
-import dspy
+import aletheia
 
-from dspy.utils.dummies import DummyLM
+from aletheia.utils.dummies import DummyLM
 
 
 def test_parallel_module():
@@ -11,15 +11,15 @@ def test_parallel_module():
         {"output": "test output 4"},
         {"output": "test output 5"},
     ])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
             super().__init__()
-            self.predictor = dspy.Predict("input -> output")
-            self.predictor2 = dspy.Predict("input -> output")
+            self.predictor = aletheia.Predict("input -> output")
+            self.predictor2 = aletheia.Predict("input -> output")
 
-            self.parallel = dspy.Parallel(num_threads=2)
+            self.parallel = aletheia.Parallel(num_threads=2)
 
         def forward(self, input):
             return self.parallel([
@@ -30,7 +30,7 @@ def test_parallel_module():
                 (self.predictor, input),
             ])
 
-    output = MyModule()(dspy.Example(input="test input").with_inputs("input"))
+    output = MyModule()(aletheia.Example(input="test input").with_inputs("input"))
 
     expected_outputs = {f"test output {i}" for i in range(1, 6)}
     assert {r.output for r in output} == expected_outputs
@@ -52,24 +52,24 @@ def test_batch_module():
         {"output": "test output 5", "reasoning": "test reasoning 5"},
     ])
 
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
             super().__init__()
-            self.predictor = dspy.Predict("input -> output")
-            self.predictor2 = dspy.Predict("input -> output, reasoning")
+            self.predictor = aletheia.Predict("input -> output")
+            self.predictor2 = aletheia.Predict("input -> output, reasoning")
 
-            self.parallel = dspy.Parallel(num_threads=2)
+            self.parallel = aletheia.Parallel(num_threads=2)
 
         def forward(self, input):
-            dspy.settings.configure(lm=lm)
+            aletheia.settings.configure(lm=lm)
             res1 = self.predictor.batch([input] * 5)
 
-            dspy.settings.configure(lm=res_lm)
+            aletheia.settings.configure(lm=res_lm)
             res2 = self.predictor2.batch([input] * 5)
 
             return (res1, res2)
 
-    result, reason_result = MyModule()(dspy.Example(input="test input").with_inputs("input"))
+    result, reason_result = MyModule()(aletheia.Example(input="test input").with_inputs("input"))
 
     # Check that we got all expected outputs without caring about order
     expected_outputs = {f"test output {i}" for i in range(1, 6)}
@@ -90,15 +90,15 @@ def test_nested_parallel_module():
         {"output": "test output 4"},
         {"output": "test output 5"},
     ])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
             super().__init__()
-            self.predictor = dspy.Predict("input -> output")
-            self.predictor2 = dspy.Predict("input -> output")
+            self.predictor = aletheia.Predict("input -> output")
+            self.predictor2 = aletheia.Predict("input -> output")
 
-            self.parallel = dspy.Parallel(num_threads=2)
+            self.parallel = aletheia.Parallel(num_threads=2)
 
         def forward(self, input):
             return self.parallel([
@@ -110,7 +110,7 @@ def test_nested_parallel_module():
                 ]),
             ])
 
-    output = MyModule()(dspy.Example(input="test input").with_inputs("input"))
+    output = MyModule()(aletheia.Example(input="test input").with_inputs("input"))
 
     # For nested structure, check first two outputs and nested outputs separately
     assert {output[0].output, output[1].output} <= {f"test output {i}" for i in range(1, 5)}
@@ -127,19 +127,19 @@ def test_nested_batch_method():
         {"output": "test output 4"},
         {"output": "test output 5"},
     ])
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
-    class MyModule(dspy.Module):
+    class MyModule(aletheia.Module):
         def __init__(self):
             super().__init__()
-            self.predictor = dspy.Predict("input -> output")
+            self.predictor = aletheia.Predict("input -> output")
 
         def forward(self, input):
-            res = self.predictor.batch([dspy.Example(input=input).with_inputs("input")]*2)
+            res = self.predictor.batch([aletheia.Example(input=input).with_inputs("input")]*2)
 
             return res
 
-    result = MyModule().batch([dspy.Example(input="test input").with_inputs("input")]*2)
+    result = MyModule().batch([aletheia.Example(input="test input").with_inputs("input")]*2)
 
     assert {result[0][0].output, result[0][1].output, result[1][0].output, result[1][1].output} \
             == {"test output 1", "test output 2", "test output 3", "test output 4"}

@@ -6,8 +6,8 @@ from timeit import default_timer as timer
 import openai
 from dotenv import load_dotenv
 
-import dspy
-from dspy.evaluate import Evaluate
+import aletheia
+from aletheia.evaluate import Evaluate
 
 from tasks.gsm8k import GSM8KTask
 from tasks.hotpotqa import HotPotQATask
@@ -72,7 +72,7 @@ class OptimizerTester:
 
         # Prompt gen model
         if not prompt_model:
-            self.prompt_model = dspy.OpenAI(
+            self.prompt_model = aletheia.OpenAI(
                 model=self.PROMPT_MODEL_NAME, max_tokens=700
             )
         else:
@@ -80,16 +80,16 @@ class OptimizerTester:
 
         # Task model
         if not task_model:
-            self.task_model = dspy.HFClientTGI(
+            self.task_model = aletheia.HFClientTGI(
                 model=self.TASK_MODEL_NAME,
                 port=[7140, 7141, 7142, 7143],
                 max_tokens=150,
             )
         else:
             self.task_model = task_model
-        self.colbertv2 = dspy.ColBERTv2(url=colbert_v2_endpoint)
+        self.colbertv2 = aletheia.ColBERTv2(url=colbert_v2_endpoint)
 
-        dspy.settings.configure(rm=self.colbertv2, lm=self.task_model)
+        aletheia.settings.configure(rm=self.colbertv2, lm=self.task_model)
 
     def write_to_csv(self, folder_name, file_name, data):
         # Ensure the output directory exists
@@ -180,7 +180,7 @@ class OptimizerTester:
         for dataset in datasets:
             print(f"Testing {dataset} Baseline LM Program...")
             task = self.load_dataset(dataset)
-            dspy.settings.lm.max_tokens = task.get_max_tokens()
+            aletheia.settings.lm.max_tokens = task.get_max_tokens()
 
             evaluate_train = Evaluate(
                 devset=task.get_trainset(),
@@ -253,7 +253,7 @@ class OptimizerTester:
         for dataset in datasets:
             task = self.load_dataset(dataset)
             print(f"Testing  Optimizers on {dataset} ...")
-            dspy.settings.lm.max_tokens = task.get_max_tokens()
+            aletheia.settings.lm.max_tokens = task.get_max_tokens()
 
             evaluate_train = Evaluate(
                 devset=task.get_trainset(),

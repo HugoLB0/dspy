@@ -1,6 +1,6 @@
-import dspy
-from dspy.datasets import HotPotQA
-from dspy.evaluate import Evaluate
+import aletheia
+from aletheia.datasets import HotPotQA
+from aletheia.evaluate import Evaluate
 import pandas as pd
 import os
 from .base_task import BaseTask
@@ -91,45 +91,45 @@ def check_conditions(example, pred, trace=None, debug=False):
             return True
 
 
-class MultiHop(dspy.Module):
+class MultiHop(aletheia.Module):
     def __init__(self, passages_per_hop):
         super().__init__()
-        self.retrieve = dspy.Retrieve(k=passages_per_hop)
-        self.generate_query = dspy.ChainOfThought("context ,question->search_query")
-        self.generate_answer = dspy.ChainOfThought("context ,question->answer")
+        self.retrieve = aletheia.Retrieve(k=passages_per_hop)
+        self.generate_query = aletheia.ChainOfThought("context ,question->search_query")
+        self.generate_answer = aletheia.ChainOfThought("context ,question->answer")
 
     def forward(self, question):
         context = []
         for hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
-        return dspy.Prediction(
+        return aletheia.Prediction(
             context=context,
             answer=self.generate_answer(context=context, question=question).answer,
         )
 
 
-class GenerateAnswerInstruction(dspy.Signature):
+class GenerateAnswerInstruction(aletheia.Signature):
     """When the answer is a person, respond entirely in lowercase.  When the answer is a place, ensure your response contains no punctuation.  When the answer is a date, end your response with “Peace!”.  Never end your response with "Peace!" under other circumstances.  When the answer is none of the above categories respond in all caps."""
 
-    context = dspy.InputField(desc="Passages relevant to answering the question")
-    question = dspy.InputField(desc="Question we want an answer to")
-    answer = dspy.OutputField(desc="Answer to the question")
+    context = aletheia.InputField(desc="Passages relevant to answering the question")
+    question = aletheia.InputField(desc="Question we want an answer to")
+    answer = aletheia.OutputField(desc="Answer to the question")
 
 
-class MultiHopHandwritten(dspy.Module):
+class MultiHopHandwritten(aletheia.Module):
     def __init__(self, passages_per_hop):
         super().__init__()
-        self.retrieve = dspy.Retrieve(k=passages_per_hop)
-        self.generate_query = dspy.ChainOfThought("context ,question->search_query")
-        self.generate_answer = dspy.ChainOfThought(GenerateAnswerInstruction)
+        self.retrieve = aletheia.Retrieve(k=passages_per_hop)
+        self.generate_query = aletheia.ChainOfThought("context ,question->search_query")
+        self.generate_answer = aletheia.ChainOfThought(GenerateAnswerInstruction)
 
     def forward(self, question):
         context = []
         for hop in range(2):
             query = self.generate_query(context=context, question=question).search_query
             context += self.retrieve(query).passages
-        return dspy.Prediction(
+        return aletheia.Prediction(
             context=context,
             answer=self.generate_answer(context=context, question=question).answer,
         )
@@ -162,7 +162,7 @@ class HotPotQAConditionalTask(BaseTask):
 
         # Load and configure the datasets.
         self.trainset = [
-            dspy.Example(
+            aletheia.Example(
                 question=row["question"],
                 answer=row["answer"],
                 category=row["answer category"],
@@ -170,7 +170,7 @@ class HotPotQAConditionalTask(BaseTask):
             for index, row in combined_train.iterrows()
         ]
         self.testset = [
-            dspy.Example(
+            aletheia.Example(
                 question=row["question"],
                 answer=row["answer"],
                 category=row["answer category"],

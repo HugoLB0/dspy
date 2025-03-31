@@ -15,7 +15,7 @@ from tests.test_utils.server.litellm_server import LITELLM_TEST_SERVER_LOG_FILE_
 @pytest.fixture()
 def litellm_test_server() -> Tuple[str, str]:
     """
-    Start a LiteLLM test server for a DSPy integration test case, and tear down the
+    Start a LiteLLM test server for a aletheia integration test case, and tear down the
     server when the test case completes.
     """
     with tempfile.TemporaryDirectory() as server_log_dir_path:
@@ -48,7 +48,7 @@ def litellm_test_server() -> Tuple[str, str]:
 
 def read_litellm_test_server_request_logs(server_log_file_path: str) -> List[Dict[str, Any]]:
     """
-    Read request logs from a LiteLLM server used during DSPy integration tests.
+    Read request logs from a LiteLLM server used during aletheia integration tests.
 
     Args:
         server_log_file_path: The filesystem path to the LiteLLM server request logs jsonlines file.

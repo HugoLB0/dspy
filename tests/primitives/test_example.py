@@ -1,6 +1,6 @@
 import pytest
-import dspy
-from dspy import Example
+import aletheia
+from aletheia import Example
 
 
 def test_example_initialization():
@@ -46,13 +46,13 @@ def test_example_deletion():
 
 
 def test_example_len():
-    example = Example(a=1, b=2, dspy_hidden=3)
+    example = Example(a=1, b=2, aletheia_hidden=3)
     assert len(example) == 2
 
 
 def test_example_repr_str_img():
     example = Example(
-        img=dspy.Image(url="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
+        img=aletheia.Image(url="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
     )
     assert (
         repr(example)
@@ -84,7 +84,7 @@ def test_example_hash():
 
 
 def test_example_keys_values_items():
-    example = Example(a=1, b=2, dspy_hidden=3)
+    example = Example(a=1, b=2, aletheia_hidden=3)
     assert set(example.keys()) == {"a", "b"}
     assert 1 in example.values()
     assert ("b", 2) in example.items()

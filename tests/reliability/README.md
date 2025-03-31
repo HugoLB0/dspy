@@ -1,22 +1,22 @@
-# DSPy Reliability Tests
+# aletheia Reliability Tests
 
-This directory contains reliability tests for DSPy programs. The purpose of these tests is to verify that DSPy programs reliabily produce expected outputs across multiple large language models (LLMs), regardless of model size or capability. These tests are designed to ensure that DSPy programs maintain robustness and accuracy across diverse LLM configurations.
+This directory contains reliability tests for aletheia programs. The purpose of these tests is to verify that aletheia programs reliabily produce expected outputs across multiple large language models (LLMs), regardless of model size or capability. These tests are designed to ensure that aletheia programs maintain robustness and accuracy across diverse LLM configurations.
 
 ### Overview
 
-Each test in this directory executes a DSPy program using various LLMs. By running the same tests across different models, these tests help validate that DSPy programs handle a wide range of inputs effectively and produce reliable outputs, even in cases where the model might struggle with the input or task.
+Each test in this directory executes a aletheia program using various LLMs. By running the same tests across different models, these tests help validate that aletheia programs handle a wide range of inputs effectively and produce reliable outputs, even in cases where the model might struggle with the input or task.
 
 ### Key Features
 
-- **Diverse LLMs**: Each DSPy program is tested with multiple LLMs, ranging from smaller models to more advanced, high-performance models. This approach allows us to assess the consistency and generality of DSPy program outputs across different model capabilities.
-- **Challenging and Adversarial Tests**: Some of the tests are intentionally challenging or adversarial, crafted to push the boundaries of DSPy. These challenging cases allow us to gauge the robustness of DSPy and identify areas for potential improvement.
-- **Cross-Model Compatibility**: By testing with different LLMs, we aim to ensure that DSPy programs perform well across model types and configurations, reducing model-specific edge cases and enhancing program versatility.
+- **Diverse LLMs**: Each aletheia program is tested with multiple LLMs, ranging from smaller models to more advanced, high-performance models. This approach allows us to assess the consistency and generality of aletheia program outputs across different model capabilities.
+- **Challenging and Adversarial Tests**: Some of the tests are intentionally challenging or adversarial, crafted to push the boundaries of aletheia. These challenging cases allow us to gauge the robustness of aletheia and identify areas for potential improvement.
+- **Cross-Model Compatibility**: By testing with different LLMs, we aim to ensure that aletheia programs perform well across model types and configurations, reducing model-specific edge cases and enhancing program versatility.
 
 ### Running the Tests
 
 - First, populate the configuration file `reliability_tests_conf.yaml` (located in this directory) with the necessary LiteLLM model/provider names and access credentials for 1. each LLM you want to test and 2. the LLM judge that you want to use for assessing the correctness of outputs in certain test cases. These should be placed in the `litellm_params` section for each model in the defined `model_list`. You can also use `litellm_params` to specify values for LLM hyperparameters like `temperature`. Any model that lacks configured `litellm_params` in the configuration file will be ignored during testing.
 
-  The configuration must also specify a DSPy adapter to use when testing, e.g. `"chat"` (for `dspy.ChatAdapter`) or `"json"` (for `dspy.JSONAdapter`).
+  The configuration must also specify a aletheia adapter to use when testing, e.g. `"chat"` (for `aletheia.ChatAdapter`) or `"json"` (for `aletheia.JSONAdapter`).
 
   An example of `reliability_tests_conf.yaml`:
 
@@ -45,7 +45,7 @@ Each test in this directory executes a DSPy program using various LLMs. By runni
       pytest .
   ```
 
-  This will execute all tests for the configured models and display detailed results for each model configuration. Tests are set up to mark expected failures for known challenging cases where a specific model might struggle, while actual (unexpected) DSPy reliability issues are flagged as failures (see below).
+  This will execute all tests for the configured models and display detailed results for each model configuration. Tests are set up to mark expected failures for known challenging cases where a specific model might struggle, while actual (unexpected) aletheia reliability issues are flagged as failures (see below).
 
 #### Running specific generated tests
 
@@ -57,7 +57,7 @@ pytest test_generated.py -k "test_nesting_1-input1"
 
 ### Test generation
 
-You can generate test DSPy programs and test inputs from text descriptions using the `tests.reliability.generate` CLI, or the `tests.reliability.generate.generate_test_cases` API. For example, to generate a test classification program and 3 challenging test inputs in the `tests/reliability/classification/generated` directory, you can run the following command from the DSPy repository root directory:
+You can generate test aletheia programs and test inputs from text descriptions using the `tests.reliability.generate` CLI, or the `tests.reliability.generate.generate_test_cases` API. For example, to generate a test classification program and 3 challenging test inputs in the `tests/reliability/classification/generated` directory, you can run the following command from the aletheia repository root directory:
 
 ```bash
 python \

@@ -1,7 +1,7 @@
 # from pytest_mock.plugin import MockerFixture
 # from transformers import AutoModelForSeq2SeqLM
 
-# import dspy
+# import aletheia
 
 
 # class MockConfig:
@@ -17,7 +17,7 @@
 
 # #     some_token = "asdfasdfasdf"
 # #     model = "google/gemma-7b"
-# #     _ = dspy.HFModel(model, token=some_token)
+# #     _ = aletheia.HFModel(model, token=some_token)
 # #     AutoModelForSeq2SeqLM.from_pretrained.assert_called_with(model, device_map="auto", token=some_token)
 
 
@@ -28,6 +28,6 @@
 # #     mocker.patch("transformers.AutoModelForSeq2SeqLM.from_pretrained")
 # #     mocker.patch("transformers.AutoConfig.from_pretrained", return_value=conf)
 # #     mocker.patch("transformers.AutoTokenizer.from_pretrained")
-# #     _ = dspy.HFModel("openai-community/gpt2")
+# #     _ = aletheia.HFModel("openai-community/gpt2")
 # #     # no token used in automodel
 # #     AutoModelForSeq2SeqLM.from_pretrained.assert_called_with("openai-community/gpt2", device_map="auto", token=None)

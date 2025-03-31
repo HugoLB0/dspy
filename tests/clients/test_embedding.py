@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 import numpy as np
 
-from dspy.clients.embedding import Embedder
+from aletheia.clients.embedding import Embedder
 
 
 # Mock response format similar to litellm's embedding response.

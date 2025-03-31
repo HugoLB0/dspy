@@ -6,13 +6,11 @@ build-backend = "setuptools.build_meta"
 # Do not add spaces around the '=' sign for any of the fields
 # preceded by a marker comment as it affects the publish workflow.
 #replace_package_name_marker
-name="dspy"
+name="aletheia"
 #replace_package_version_marker
-version="2.6.16"
-description = "DSPy"
+version="0.2.0"
+description = "aletheia"
 readme = "README.md"
-authors = [{ name = "Omar Khattab", email = "okhattab@stanford.edu" }]
-license = { text = "MIT License" }
 requires-python = ">=3.9, <3.13"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -51,11 +49,11 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["dspy", "dspy.*"]
+include = ["aletheia", "aletheia.*"]
 exclude = ["tests", "tests.*"]
 
 [tool.setuptools.package-data]
-dspy = ["primitives/*.js"]
+aletheia = ["primitives/*.js"]
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.18.0,<1.0.0"]
@@ -85,18 +83,18 @@ dev = ["pytest>=6.2.5"]
 fastembed = ["fastembed>=0.2.0"]
 
 [project.urls]
-homepage = "https://github.com/stanfordnlp/dspy"
+homepage = "https://github.com/stanfordnlp/aletheia"
 
 [tool.poetry]
-name = "dspy"
+name = "aletheia"
 version = "2.6.13"
-description = "DSPy"
+description = "aletheia"
 authors = ["Omar Khattab <okhattab@stanford.edu>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/stanfordnlp/dspy"
-repository = "https://github.com/stanfordnlp/dspy"
-keywords = ["dspy", "ai", "language models", "llm", "openai"]
+homepage = "https://github.com/stanfordnlp/aletheia"
+repository = "https://github.com/stanfordnlp/aletheia"
+keywords = ["aletheia", "ai", "language models", "llm", "openai"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"

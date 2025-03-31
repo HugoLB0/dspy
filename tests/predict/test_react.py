@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel
 
-import dspy
-from dspy.predict import react
-from dspy.utils.dummies import DummyLM, dummy_rm
+import aletheia
+from aletheia.predict import react
+from aletheia.utils.dummies import DummyLM, dummy_rm
 import litellm
 
 # def test_example_no_tools():
@@ -14,12 +14,12 @@ import litellm
 #             {"Thought_1": "Initial thoughts", "Action_1": "Finish[blue]"},
 #         ]
 #     )
-#     dspy.settings.configure(lm=lm, rm=dummy_rm())
+#     aletheia.settings.configure(lm=lm, rm=dummy_rm())
 
-#     program = dspy.ReAct("question -> answer")
+#     program = aletheia.ReAct("question -> answer")
 
 #     # Check default tools
-#     assert isinstance(program.tools["Finish"], dspy.Example)
+#     assert isinstance(program.tools["Finish"], aletheia.Example)
 
 #     # Call the ReAct module on a particular input
 #     question = "What is the color of the sky?"
@@ -45,14 +45,14 @@ import litellm
 #             "Let's add some more sentences to act as summy passages.",
 #         ]
 #     )
-#     dspy.settings.configure(lm=lm, rm=rm)
+#     aletheia.settings.configure(lm=lm, rm=rm)
 
-#     program = dspy.ReAct("question -> answer")
+#     program = aletheia.ReAct("question -> answer")
 
 #     # Check default tools
 #     assert len(program.tools) == 2
-#     assert isinstance(program.tools["Search"], dspy.Retrieve)
-#     assert isinstance(program.tools["Finish"], dspy.Example)
+#     assert isinstance(program.tools["Search"], aletheia.Retrieve)
+#     assert isinstance(program.tools["Finish"], aletheia.Example)
 
 #     # Call the ReAct module on a particular input
 #     question = "What is the color of the sky?"
@@ -99,11 +99,11 @@ import litellm
 #             {"Thought_3": "Even more thoughts", "Action_3": "Finish[baz]"},
 #         ]
 #     )
-#     dspy.settings.configure(lm=lm)
+#     aletheia.settings.configure(lm=lm)
 
 #     tool1 = DummyTool1()
 #     tool2 = DummyTool2()
-#     program = dspy.ReAct("question -> answer", tools=[tool1, tool2])
+#     program = aletheia.ReAct("question -> answer", tools=[tool1, tool2])
 
 #     question = "What is the color of the sky?"
 #     result = program(question=question)
@@ -115,13 +115,13 @@ import litellm
 
 
 # def test_signature_instructions():
-#     class ExampleSignature(dspy.Signature):
+#     class ExampleSignature(aletheia.Signature):
 #         """You are going to generate output based on input."""
 
-#         input = dspy.InputField()
-#         output = dspy.OutputField()
+#         input = aletheia.InputField()
+#         output = aletheia.OutputField()
 
-#     react = dspy.ReAct(ExampleSignature)
+#     react = aletheia.ReAct(ExampleSignature)
 
 #     assert react.react[0].signature.instructions is not None
 #     assert react.react[0].signature.instructions.startswith("You are going to generate output based on input.")
@@ -164,12 +164,12 @@ def test_tool_calling_with_pydantic_args():
             return None
         return f"It's my honor to invite {participant_name} to event {event_info.name} on {event_info.date}"
 
-    class InvitationSignature(dspy.Signature):
-        participant_name: str = dspy.InputField(desc="The name of the participant to invite")
-        event_info: CalendarEvent = dspy.InputField(desc="The information about the event")
-        invitation_letter: str = dspy.OutputField(desc="The invitation letter to be sent to the participant")
+    class InvitationSignature(aletheia.Signature):
+        participant_name: str = aletheia.InputField(desc="The name of the participant to invite")
+        event_info: CalendarEvent = aletheia.InputField(desc="The information about the event")
+        invitation_letter: str = aletheia.OutputField(desc="The invitation letter to be sent to the participant")
 
-    react = dspy.ReAct(InvitationSignature, tools=[write_invitation_letter])
+    react = aletheia.ReAct(InvitationSignature, tools=[write_invitation_letter])
 
     lm = DummyLM(
         [
@@ -199,7 +199,7 @@ def test_tool_calling_with_pydantic_args():
             },
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
 
     outputs = react(
         participant_name="Alice",
@@ -236,7 +236,7 @@ def test_tool_calling_without_typehint():
         """Add two numbers."""
         return a + b
 
-    react = dspy.ReAct("a, b -> c:int", tools=[foo])
+    react = aletheia.ReAct("a, b -> c:int", tools=[foo])
     lm = DummyLM(
         [
             {"next_thought": "I need to add two numbers.", "next_tool_name": "foo", "next_tool_args": {"a": 1, "b": 2}},
@@ -244,7 +244,7 @@ def test_tool_calling_without_typehint():
             {"reasoning": "I added the numbers successfully", "c": 3},
         ]
     )
-    dspy.settings.configure(lm=lm)
+    aletheia.settings.configure(lm=lm)
     outputs = react(a=1, b=2)
 
     expected_trajectory = {
@@ -269,7 +269,7 @@ def test_trajectory_truncation():
         return f"Echoed: {text}"
 
     # Create ReAct instance with our echo tool
-    react = dspy.ReAct("input_text -> output_text", tools=[echo])
+    react = aletheia.ReAct("input_text -> output_text", tools=[echo])
 
     # Mock react.react to simulate multiple tool calls
     call_count = 0
@@ -280,7 +280,7 @@ def test_trajectory_truncation():
 
         if call_count < 3:
             # First 2 calls use the echo tool
-            return dspy.Prediction(
+            return aletheia.Prediction(
                 next_thought=f"Thought {call_count}",
                 next_tool_name="echo",
                 next_tool_args={"text": f"Text {call_count}"},
@@ -290,10 +290,10 @@ def test_trajectory_truncation():
             raise litellm.ContextWindowExceededError("Context window exceeded", "dummy_model", "dummy_provider")
         else:
             # The 4th call finishes
-            return dspy.Prediction(next_thought="Final thought", next_tool_name="finish", next_tool_args={})
+            return aletheia.Prediction(next_thought="Final thought", next_tool_name="finish", next_tool_args={})
 
     react.react = mock_react
-    react.extract = lambda **kwargs: dspy.Prediction(output_text="Final output")
+    react.extract = lambda **kwargs: aletheia.Prediction(output_text="Final output")
 
     # Call forward and get the result
     result = react(input_text="test input")

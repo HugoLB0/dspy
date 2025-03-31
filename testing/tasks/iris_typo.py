@@ -2,23 +2,23 @@ from datasets import load_dataset
 from .base_task import BaseTask
 
 import random
-import dspy
+import aletheia
 
 
-class Sig(dspy.Signature):
+class Sig(aletheia.Signature):
     "Given the petal and sepal dimensions in cm, predict the iris species."
     # "Given the petal and sepal dimensions in cm, predict the iris species. If petal_width < 1.0, setosa. Otherwise, if petal_width < 1.65, versicolor. Otherwise, virginica."
 
-    petal_length = dspy.InputField()
-    petal_width = dspy.InputField()
-    sepal_length = dspy.InputField()
-    sepal_width = dspy.InputField()
-    answer = dspy.OutputField(desc="setosa, versicolour, or virginica")
+    petal_length = aletheia.InputField()
+    petal_width = aletheia.InputField()
+    sepal_length = aletheia.InputField()
+    sepal_width = aletheia.InputField()
+    answer = aletheia.OutputField(desc="setosa, versicolour, or virginica")
 
 
-class Classify(dspy.Module):
+class Classify(aletheia.Module):
     def __init__(self):
-        self.pred = dspy.ChainOfThought(Sig)
+        self.pred = aletheia.ChainOfThought(Sig)
 
     def forward(self, petal_length, petal_width, sepal_length, sepal_width):
         return self.pred(
@@ -35,11 +35,11 @@ class IrisTypoClassifierTask(BaseTask):
         dataset = load_dataset("hitorilabs/iris")
 
         fullset = [
-            dspy.Example(**{k: str(round(v, 2)) for k, v in example.items()})
+            aletheia.Example(**{k: str(round(v, 2)) for k, v in example.items()})
             for example in dataset["train"]
         ]
         fullset = [
-            dspy.Example(
+            aletheia.Example(
                 **{
                     **x,
                     "answer": ["setosa", "versicolor", "virginica"][int(x["species"])],
@@ -59,7 +59,7 @@ class IrisTypoClassifierTask(BaseTask):
         NUM_THREADS = 16
 
         # TODO: set up metrics
-        self.metric = dspy.evaluate.answer_exact_match
+        self.metric = aletheia.evaluate.answer_exact_match
 
         kwargs = dict(num_threads=NUM_THREADS, display_progress=True, display_table=15)
 

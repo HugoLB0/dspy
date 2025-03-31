@@ -1,4 +1,4 @@
-name: Update DSPy Docs
+name: Update aletheia Docs
 
 on:
   push:
@@ -41,6 +41,6 @@ jobs:
         with:
           source-directory: "docs"
           destination-github-username: "krypticmouse"
-          destination-repository-name: "dspy-docs"
+          destination-repository-name: "aletheia-docs"
           user-email: github-actions@github.com
           target-branch: master

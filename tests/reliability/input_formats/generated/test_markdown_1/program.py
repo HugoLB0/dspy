@@ -23,10 +23,10 @@ class ProgramOutputs(BaseModel):
 
 ### Program definition ###
 
-import dspy
+import aletheia
 
 
-class BaseSignature(dspy.Signature):
+class BaseSignature(aletheia.Signature):
     """
     The program is designed to generate a table of contents (TOC) from a given markdown document. It will parse the markdown content, identify headings, and create a hierarchical TOC based on the heading levels. The TOC will be presented in markdown format, with each entry linked to the corresponding section in the document.
     """
@@ -36,14 +36,14 @@ program_signature = BaseSignature
 for input_field_name, input_field in ProgramInputs.model_fields.items():
     program_signature = program_signature.append(
         name=input_field_name,
-        field=dspy.InputField(description=input_field.description),
+        field=aletheia.InputField(description=input_field.description),
         type_=input_field.annotation,
     )
 for output_field_name, output_field in ProgramOutputs.model_fields.items():
     program_signature = program_signature.append(
         name=output_field_name,
-        field=dspy.OutputField(description=input_field.description),
+        field=aletheia.OutputField(description=input_field.description),
         type_=output_field.annotation,
     )
 
-program = dspy.ChainOfThought(program_signature)
+program = aletheia.ChainOfThought(program_signature)

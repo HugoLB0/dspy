@@ -1,11 +1,11 @@
-# FILEPATH: /Users/ahle/repos/dspy/tests/evaluate/test_metrics.py
+# FILEPATH: /Users/ahle/repos/aletheia/tests/evaluate/test_metrics.py
 
-import dspy
-from dspy.evaluate.metrics import answer_exact_match
-from dspy.predict import Predict
+import aletheia
+from aletheia.evaluate.metrics import answer_exact_match
+from aletheia.predict import Predict
 
 def test_answer_exact_match_string():
-    example = dspy.Example(
+    example = aletheia.Example(
         question="What is 1+1?",
         answer="2",
     ).with_inputs("question")
@@ -14,7 +14,7 @@ def test_answer_exact_match_string():
     assert answer_exact_match(example, pred)
 
 def test_answer_exact_match_list():
-    example = dspy.Example(
+    example = aletheia.Example(
         question="What is 1+1?",
         answer=["2", "two"],
     ).with_inputs("question")
@@ -23,7 +23,7 @@ def test_answer_exact_match_list():
     assert answer_exact_match(example, pred)
 
 def test_answer_exact_match_no_match():
-    example = dspy.Example(
+    example = aletheia.Example(
         question="What is 1+1?",
         answer="2",
     ).with_inputs("question")
